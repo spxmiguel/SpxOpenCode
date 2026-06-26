@@ -1,8 +1,13 @@
 import { describe, test, expect, beforeEach } from "bun:test"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { mkdir, writeFile, rm } from "node:fs/promises"
 import { isDangerous } from "../auto-accept"
 import { classify } from "../fallback"
 import { acceptMode, setAcceptMode, lastError, reportError } from "../accept-mode-store"
 import type { AcceptMode } from "../accept-mode-store"
+import { parseSkill, loadSkillsDir } from "../skill-loader"
+import { checkSkillsHealth } from "../doctor"
 
 // ---------------------------------------------------------------------------
 // isDangerous
@@ -125,5 +130,166 @@ describe("reportError", () => {
     reportError("First error", 60_000)
     reportError("Second error", 60_000)
     expect(lastError()).toBe("Second error")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// parseSkill
+// ---------------------------------------------------------------------------
+
+const VALID_SKILL = `---
+id: test-skill
+name: Test Skill
+description: A test skill
+version: 1.0.0
+tags: [test, example]
+---
+
+Skill body here.
+`
+
+describe("parseSkill", () => {
+  test("parses valid skill", () => {
+    const result = parseSkill(VALID_SKILL, "test.md")
+    if ("reason" in result) throw new Error(result.reason)
+    expect(result.id).toBe("test-skill")
+    expect(result.name).toBe("Test Skill")
+    expect(result.tags).toEqual(["test", "example"])
+    expect(result.body).toBe("Skill body here.")
+    expect(result.source).toBe("test.md")
+  })
+
+  test("error on missing frontmatter", () => {
+    const result = parseSkill("No frontmatter here", "bad.md")
+    expect("reason" in result).toBe(true)
+    if ("reason" in result) expect(result.reason).toContain("missing frontmatter")
+  })
+
+  test("error on missing id", () => {
+    const content = VALID_SKILL.replace("id: test-skill\n", "")
+    const result = parseSkill(content, "no-id.md")
+    expect("reason" in result).toBe(true)
+    if ("reason" in result) expect(result.reason).toContain("missing required field: id")
+  })
+
+  test("error on missing name", () => {
+    const content = VALID_SKILL.replace("name: Test Skill\n", "")
+    const result = parseSkill(content, "no-name.md")
+    expect("reason" in result).toBe(true)
+    if ("reason" in result) expect(result.reason).toContain("missing required field: name")
+  })
+
+  test("error on missing version", () => {
+    const content = VALID_SKILL.replace("version: 1.0.0\n", "")
+    const result = parseSkill(content, "no-version.md")
+    expect("reason" in result).toBe(true)
+    if ("reason" in result) expect(result.reason).toContain("missing required field: version")
+  })
+
+  test("error on missing tags", () => {
+    const content = VALID_SKILL.replace("tags: [test, example]\n", "")
+    const result = parseSkill(content, "no-tags.md")
+    expect("reason" in result).toBe(true)
+    if ("reason" in result) expect(result.reason).toContain("missing required field: tags")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// loadSkillsDir
+// ---------------------------------------------------------------------------
+
+describe("loadSkillsDir", () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = join(tmpdir(), `spx-test-skills-${Date.now()}`)
+    await mkdir(dir, { recursive: true })
+  })
+
+  test("loads valid skill", async () => {
+    await writeFile(join(dir, "test.md"), VALID_SKILL)
+    const result = await loadSkillsDir(dir)
+    expect(result.skills).toHaveLength(1)
+    expect(result.errors).toHaveLength(0)
+    expect(result.skills[0].id).toBe("test-skill")
+  })
+
+  test("ignores non-md files", async () => {
+    await writeFile(join(dir, "test.md"), VALID_SKILL)
+    await writeFile(join(dir, "readme.txt"), "not a skill")
+    await writeFile(join(dir, "script.js"), "console.log()")
+    const result = await loadSkillsDir(dir)
+    expect(result.skills).toHaveLength(1)
+  })
+
+  test("reports missing frontmatter as error", async () => {
+    await writeFile(join(dir, "bad.md"), "No frontmatter here")
+    const result = await loadSkillsDir(dir)
+    expect(result.skills).toHaveLength(0)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].reason).toContain("missing frontmatter")
+  })
+
+  test("reports missing required field as error", async () => {
+    const content = VALID_SKILL.replace("name: Test Skill\n", "")
+    await writeFile(join(dir, "no-name.md"), content)
+    const result = await loadSkillsDir(dir)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].reason).toContain("missing required field: name")
+  })
+
+  test("reports duplicate id as error", async () => {
+    await writeFile(join(dir, "a.md"), VALID_SKILL)
+    await writeFile(join(dir, "b.md"), VALID_SKILL)
+    const result = await loadSkillsDir(dir)
+    expect(result.skills).toHaveLength(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].reason).toContain("duplicate id")
+  })
+
+  test("nonexistent dir returns empty result", async () => {
+    const result = await loadSkillsDir("/nonexistent/path/that/does/not/exist")
+    expect(result.skills).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// checkSkillsHealth
+// ---------------------------------------------------------------------------
+
+describe("checkSkillsHealth", () => {
+  test("ok with loaded skills", () => {
+    const result = checkSkillsHealth({
+      skills: [{ id: "s1", name: "S1", description: "d", version: "1.0.0", tags: ["t"], body: "", source: "s1.md" }],
+      errors: [],
+    })
+    expect(result.ok).toBe(true)
+    expect(result.message).toContain("s1")
+  })
+
+  test("ok when empty (no skills dir or empty dir)", () => {
+    const result = checkSkillsHealth({ skills: [], errors: [] })
+    expect(result.ok).toBe(true)
+    expect(result.message).toContain("empty")
+  })
+
+  test("error when skills have errors", () => {
+    const result = checkSkillsHealth({
+      skills: [],
+      errors: [{ source: "bad.md", reason: "missing frontmatter" }],
+    })
+    expect(result.ok).toBe(false)
+    expect(result.fix).toContain("bad.md")
+  })
+
+  test("partial error: some ok, some invalid", () => {
+    const result = checkSkillsHealth({
+      skills: [{ id: "s1", name: "S1", description: "d", version: "1.0.0", tags: ["t"], body: "", source: "s1.md" }],
+      errors: [{ source: "bad.md", reason: "missing required field: id" }],
+    })
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain("1 skill(s) loaded")
+    expect(result.message).toContain("1 invalid")
   })
 })
