@@ -1,5 +1,6 @@
 import type { TuiPlugin } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
+import { reportError } from "./accept-mode-store"
 
 const id = "spx:fallback"
 
@@ -8,7 +9,7 @@ type FriendlyError = {
   message: string
 }
 
-function classify(error: any): FriendlyError | undefined {
+export function classify(error: any): FriendlyError | undefined {
   const name: string = error?.name ?? ""
   const statusCode: number | undefined = error?.statusCode
   const msg: string = (error?.message ?? "").toLowerCase()
@@ -86,6 +87,7 @@ const tui: TuiPlugin = async (api) => {
     const friendly = classify(error)
     if (!friendly) return
 
+    reportError(friendly.title)
     api.attention.notify({
       title: friendly.title,
       message: friendly.message,

@@ -11,3 +11,16 @@ export { acceptMode }
 export function setAcceptMode(mode: AcceptMode) {
   setAcceptModeSignal(mode)
 }
+
+export const [lastError, setLastError] = createSignal<string | null>(null)
+
+let _clearErrorTimer: ReturnType<typeof setTimeout> | undefined
+
+export function reportError(title: string, ttlMs = 30_000) {
+  if (_clearErrorTimer !== undefined) clearTimeout(_clearErrorTimer)
+  setLastError(title)
+  _clearErrorTimer = setTimeout(() => {
+    setLastError(null)
+    _clearErrorTimer = undefined
+  }, ttlMs)
+}
