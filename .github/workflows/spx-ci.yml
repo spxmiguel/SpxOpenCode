@@ -6,7 +6,13 @@ on:
     paths:
       - "packages/tui/src/feature-plugins/spx/**"
       - "packages/tui/src/feature-plugins/builtins.ts"
-      - "packages/tui/src/keybind.ts"
+      - "packages/tui/src/config/keybind.ts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/tui/src/feature-plugins/spx/**"
+      - "packages/tui/src/feature-plugins/builtins.ts"
+      - "packages/tui/src/config/keybind.ts"
 
 jobs:
   typecheck:
