@@ -83,7 +83,7 @@ async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> 
       message: "No LSP servers configured (optional).",
     })
   } else {
-    const failed = lspItems.filter((l) => l.status === "failed")
+    const failed = lspItems.filter((l) => l.status === "error")
     if (failed.length > 0) {
       results.push({
         name: "LSP",
