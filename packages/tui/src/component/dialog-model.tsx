@@ -3,16 +3,20 @@ import { useLocal } from "../context/local"
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect } from "../ui/dialog-select"
 import { useDialog } from "../ui/dialog"
+import { DialogPrompt } from "../ui/dialog-prompt"
 import { createDialogProviderOptions, DialogProvider } from "./dialog-provider"
 import { DialogVariant } from "./dialog-variant"
 import * as fuzzysort from "fuzzysort"
 import { useConnected } from "./use-connected"
 import { useSync } from "../context/sync"
+import { useToast } from "../ui/toast"
+import { route } from "../feature-plugins/spx/auto-router"
 
 export function DialogModel(props: { providerID?: string }) {
   const local = useLocal()
   const sync = useSync()
   const dialog = useDialog()
+  const toast = useToast()
   const [query, setQuery] = createSignal("")
 
   const connected = useConnected()
@@ -126,7 +130,51 @@ export function DialogModel(props: { providerID?: string }) {
       ]
     }
 
-    return [...favoriteOptions, ...recentOptions, ...providerOptions, ...popularProviders]
+    const autoOption = showExtra()
+      ? [
+          {
+            key: "auto-by-spxmiguel",
+            value: { providerID: "auto", modelID: "auto-by-spxmiguel" },
+            title: "Auto by SpxMiguel",
+            description: "Routes to best model based on task",
+            category: "Auto",
+            disabled: false,
+            footer: undefined,
+            releaseDate: "9999-01-01",
+            async onSelect() {
+              const taskDesc = await DialogPrompt.show(dialog, "Auto by SpxMiguel", {
+                placeholder: "Describe your task (e.g. refactor auth module)",
+                description: () => "Auto picks the best model based on keywords in your description.",
+              })
+              if (taskDesc === null) return
+              const current = local.model.current()
+              const fallback = current ?? { providerID: "anthropic", modelID: "claude-sonnet-4-5" }
+              const result = route(taskDesc, fallback)
+              if (result.reason === "unknown") {
+                toast.show({ variant: "info", message: `Auto: staying on current model (${result.label})` })
+                dialog.clear()
+                return
+              }
+              const providerConnected = sync.data.provider.some((p) => p.id === result.providerID)
+              if (!providerConnected) {
+                toast.show({
+                  variant: "error",
+                  message: `Auto: staying on current model (${result.providerID} not connected)`,
+                })
+                dialog.clear()
+                return
+              }
+              toast.show({
+                variant: "info",
+                message: `Auto → ${result.modelID} (${result.label})`,
+              })
+              onSelect(result.providerID, result.modelID)
+            },
+          },
+        ]
+      : []
+
+    return [...autoOption, ...favoriteOptions, ...recentOptions, ...providerOptions, ...popularProviders]
   })
 
   const provider = createMemo(() =>
