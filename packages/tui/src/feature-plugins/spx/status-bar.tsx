@@ -1,10 +1,16 @@
+import { join } from "node:path"
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
-import { createMemo, Show } from "solid-js"
-import { acceptMode, lastError } from "./accept-mode-store"
+import { createMemo, createSignal, Show } from "solid-js"
+import { acceptMode, lastError, loopActive } from "./accept-mode-store"
+import { autoChosenModel } from "./auto-chosen-store"
+import { lastDoctorOk } from "./doctor"
+import { loadSkillsDir } from "./skill-loader"
 import { useLocal } from "../../context/local"
 
 const id = "spx:status-bar"
+
+const [skillsCount, setSkillsCount] = createSignal(0)
 
 function AcceptModeIndicator(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
@@ -34,42 +40,8 @@ function GitBranch(props: { api: TuiPluginApi }) {
   return (
     <Show when={branch()}>
       {(b) => (
-        <text fg={theme().textMuted} flexShrink={0}>
+        <text fg={theme().textMuted} flexShrink={1}>
           ⎇ {b()}
-        </text>
-      )}
-    </Show>
-  )
-}
-
-function ProviderCount(props: { api: TuiPluginApi }) {
-  const theme = () => props.api.theme.current
-  const count = createMemo(() => props.api.state.provider.length)
-  const color = createMemo(() => (count() === 0 ? theme().error : theme().textMuted))
-  const label = createMemo(() => (count() === 0 ? "no providers" : `${count()} providers`))
-
-  return (
-    <text fg={color()} flexShrink={0}>
-      {label()}
-    </text>
-  )
-}
-
-function CurrentModel(props: { api: TuiPluginApi }) {
-  const theme = () => props.api.theme.current
-  const local = useLocal()
-  const model = createMemo(() => {
-    const m = local.model.current()
-    if (!m) return null
-    if (m.providerID === "auto") return null
-    return m.modelID
-  })
-
-  return (
-    <Show when={model()}>
-      {(id) => (
-        <text fg={theme().textMuted} flexShrink={0}>
-          ◈ {id()}
         </text>
       )}
     </Show>
@@ -90,6 +62,89 @@ function LastErrorIndicator(props: { api: TuiPluginApi }) {
   )
 }
 
+function LoopIndicator(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+
+  return (
+    <Show when={loopActive()}>
+      <text fg={theme().success} flexShrink={1}>
+        ↺ loop
+      </text>
+    </Show>
+  )
+}
+
+function AutoIndicator(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+
+  return (
+    <Show when={autoChosenModel() !== null}>
+      <text fg={theme().success} flexShrink={1}>
+        ◈ Auto
+      </text>
+    </Show>
+  )
+}
+
+function DoctorIndicator(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+  const ok = lastDoctorOk
+
+  return (
+    <Show when={ok() !== null}>
+      <text fg={ok() ? theme().success : theme().error} flexShrink={1}>
+        {ok() ? "✓ doc" : "✗ doc"}
+      </text>
+    </Show>
+  )
+}
+
+function SkillsCountIndicator(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+
+  return (
+    <Show when={skillsCount() > 0}>
+      <text fg={theme().textMuted} flexShrink={1}>
+        {skillsCount()} skills
+      </text>
+    </Show>
+  )
+}
+
+function CurrentModel(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+  const local = useLocal()
+  const model = createMemo(() => {
+    const m = local.model.current()
+    if (!m) return null
+    if (m.providerID === "auto") return null
+    return m.modelID
+  })
+
+  return (
+    <Show when={model()}>
+      {(id) => (
+        <text fg={theme().textMuted} flexShrink={1}>
+          ◈ {id()}
+        </text>
+      )}
+    </Show>
+  )
+}
+
+function ProviderCount(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+  const count = createMemo(() => props.api.state.provider.length)
+  const color = createMemo(() => (count() === 0 ? theme().error : theme().textMuted))
+  const label = createMemo(() => (count() === 0 ? "no providers" : `${count()} providers`))
+
+  return (
+    <text fg={color()} flexShrink={0}>
+      {label()}
+    </text>
+  )
+}
+
 function View(props: { api: TuiPluginApi }) {
   return (
     <box
@@ -104,6 +159,10 @@ function View(props: { api: TuiPluginApi }) {
       <GitBranch api={props.api} />
       <LastErrorIndicator api={props.api} />
       <box flexGrow={1} />
+      <LoopIndicator api={props.api} />
+      <AutoIndicator api={props.api} />
+      <DoctorIndicator api={props.api} />
+      <SkillsCountIndicator api={props.api} />
       <CurrentModel api={props.api} />
       <ProviderCount api={props.api} />
     </box>
@@ -111,6 +170,9 @@ function View(props: { api: TuiPluginApi }) {
 }
 
 const tui: TuiPlugin = async (api) => {
+  const skillsDir = join(process.cwd(), "spx", "skills")
+  loadSkillsDir(skillsDir).then((r) => setSkillsCount(r.skills.length))
+
   api.slots.register({
     order: 200,
     slots: {

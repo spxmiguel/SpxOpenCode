@@ -1,7 +1,10 @@
 import { join } from "node:path"
+import { createSignal } from "solid-js"
 import type { TuiPlugin, TuiDialogStack } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { loadSkillsDir, type SkillLoadResult } from "./skill-loader"
+
+export const [lastDoctorOk, setLastDoctorOk] = createSignal<boolean | null>(null)
 
 const id = "spx:doctor"
 
@@ -132,6 +135,9 @@ async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> 
   const skillsDir = join(process.cwd(), "spx", "skills")
   const skillsResult = await loadSkillsDir(skillsDir)
   results.push(checkSkillsHealth(skillsResult))
+
+  const problems = results.filter((c) => !c.ok).length
+  setLastDoctorOk(problems === 0)
 
   return results
 }

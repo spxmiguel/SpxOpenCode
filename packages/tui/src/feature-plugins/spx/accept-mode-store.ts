@@ -24,3 +24,6 @@ export function reportError(title: string, ttlMs = 30_000) {
     _clearErrorTimer = undefined
   }, ttlMs)
 }
+
+export const LOOP_KEY = "spx.loop.active"
+export const [loopActive, setLoopActive] = createSignal<boolean>(false)

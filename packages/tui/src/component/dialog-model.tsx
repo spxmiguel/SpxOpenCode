@@ -1,4 +1,4 @@
-import { createMemo, createSignal } from "solid-js"
+import { createMemo } from "solid-js"
 import { useLocal } from "../context/local"
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect } from "../ui/dialog-select"
@@ -11,8 +11,7 @@ import { useConnected } from "./use-connected"
 import { useSync } from "../context/sync"
 import { useToast } from "../ui/toast"
 import { route } from "../feature-plugins/spx/auto-router"
-
-const [autoChosenModel, setAutoChosenModel] = createSignal<{ providerID: string; modelID: string } | null>(null)
+import { autoChosenModel, setAutoChosenModel } from "../feature-plugins/spx/auto-chosen-store"
 
 export function DialogModel(props: { providerID?: string }) {
   const local = useLocal()
