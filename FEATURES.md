@@ -112,6 +112,67 @@ SpxOpenCode Doctor
 
 ---
 
+## Disabling plugins
+
+You can disable any SpxOpenCode plugin without uninstalling the fork. OpenCode continues to work fully with all spx plugins disabled — you simply get vanilla OpenCode behavior.
+
+### How it works
+
+Each built-in plugin entry in `packages/tui/src/feature-plugins/builtins.ts` supports an optional `enabled` field (type: `boolean`). When `enabled` is `false`, that plugin is skipped at startup.
+
+The `BuiltinTuiPlugin` type definition:
+
+```ts
+export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
+  id: string
+  tui: TuiPlugin
+  enabled?: boolean   // set to false to disable
+}
+```
+
+### Example — disable a single plugin
+
+To disable the status bar, edit `createBuiltinPlugins()` in `packages/tui/src/feature-plugins/builtins.ts`:
+
+```ts
+    // ...other plugins...
+    { ...SpxStatusBar, enabled: false },   // disables spx:status-bar
+    SpxAutoAccept,
+    SpxFallback,
+    SpxDoctor,
+```
+
+### Example — disable all SpxOpenCode plugins
+
+```ts
+    // ...OpenCode core plugins...
+    { ...SpxStatusBar,  enabled: false },
+    { ...SpxAutoAccept, enabled: false },
+    { ...SpxFallback,   enabled: false },
+    { ...SpxDoctor,     enabled: false },
+```
+
+### Plugin reference
+
+| Import | Plugin ID | Description |
+|--------|-----------|-------------|
+| `SpxStatusBar` | `spx:status-bar` | Persistent footer bar (accept mode, git branch, providers) |
+| `SpxAutoAccept` | `spx:auto-accept` | `shift+tab` accept-mode cycling |
+| `SpxFallback` | `spx:fallback` | Friendly error notifications |
+| `SpxDoctor` | `spx:doctor` | `/doctor` health-check slash command |
+
+### After editing
+
+Rebuild and run:
+
+```bash
+bun run build   # or: bun run dev
+```
+
+> **Note:** The `which-key` OpenCode core plugin already uses `enabled: false` by default — you can see this pattern in `packages/tui/src/feature-plugins/system/which-key.tsx`.
+
+---
+
 ## Planned Features (not yet implemented)
 
 See [ROADMAP.md](ROADMAP.md) for versioned delivery targets.

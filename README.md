@@ -79,18 +79,62 @@ bun run build
 bun run dev
 ```
 
-SpxOpenCode features are active by default. To use as vanilla OpenCode, disable spx plugins in your config:
+SpxOpenCode features are active by default. You can disable individual SpxOpenCode plugins without uninstalling the fork — OpenCode continues to work fully with all spx plugins disabled.
 
-```json
-{
-  "plugins": {
-    "spx:status-bar": { "enabled": false },
-    "spx:auto-accept": { "enabled": false },
-    "spx:fallback": { "enabled": false },
-    "spx:doctor": { "enabled": false }
-  }
+### Disabling SpxOpenCode features
+
+Each built-in plugin entry in `packages/tui/src/feature-plugins/builtins.ts` supports an `enabled` field. Set it to `false` to disable that plugin:
+
+```ts
+// packages/tui/src/feature-plugins/builtins.ts
+
+export function createBuiltinPlugins(options: { experimentalEventSystem: boolean }): BuiltinTuiPlugin[] {
+  return [
+    HomeFooter,
+    HomeTips,
+    SidebarContext,
+    SidebarMcp,
+    SidebarLsp,
+    SidebarTodo,
+    SidebarFiles,
+    SidebarFooter,
+    Notifications,
+    PluginManager,
+    WhichKey,
+    DiffViewer,
+    { ...SpxStatusBar, enabled: false },   // disables spx:status-bar
+    SpxAutoAccept,
+    SpxFallback,
+    SpxDoctor,
+  ]
 }
 ```
+
+The four SpxOpenCode plugins are:
+
+| Import | Plugin ID | What it does |
+|--------|-----------|--------------|
+| `SpxStatusBar` | `spx:status-bar` | Persistent footer bar with accept mode, git branch, provider count |
+| `SpxAutoAccept` | `spx:auto-accept` | `shift+tab` accept-mode cycling (Manual / Auto / YOLO) |
+| `SpxFallback` | `spx:fallback` | Friendly error notifications for session errors |
+| `SpxDoctor` | `spx:doctor` | `/doctor` health-check slash command |
+
+To disable all SpxOpenCode plugins at once:
+
+```ts
+    { ...SpxStatusBar,  enabled: false },
+    { ...SpxAutoAccept, enabled: false },
+    { ...SpxFallback,   enabled: false },
+    { ...SpxDoctor,     enabled: false },
+```
+
+After editing, rebuild and run:
+
+```bash
+bun run build   # or: bun run dev
+```
+
+> **Note:** Disabling SpxOpenCode plugins does **not** require uninstalling the fork. OpenCode works fully with all spx plugins disabled — you simply get vanilla OpenCode behavior.
 
 ---
 
