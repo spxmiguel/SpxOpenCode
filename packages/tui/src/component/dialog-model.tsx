@@ -12,6 +12,8 @@ import { useSync } from "../context/sync"
 import { useToast } from "../ui/toast"
 import { route } from "../feature-plugins/spx/auto-router"
 
+const [autoChosenModel, setAutoChosenModel] = createSignal<{ providerID: string; modelID: string } | null>(null)
+
 export function DialogModel(props: { providerID?: string }) {
   const local = useLocal()
   const sync = useSync()
@@ -130,13 +132,23 @@ export function DialogModel(props: { providerID?: string }) {
       ]
     }
 
+    const chosen = autoChosenModel()
+    const current = local.model.current()
+    const isAutoActive =
+      chosen !== null &&
+      current !== null &&
+      chosen.providerID === current.providerID &&
+      chosen.modelID === current.modelID
+
     const autoOption = showExtra()
       ? [
           {
             key: "auto-by-spxmiguel",
             value: { providerID: "auto", modelID: "auto-by-spxmiguel" },
             title: "Auto by SpxMiguel",
-            description: "Routes to best model based on task",
+            description: isAutoActive
+              ? "Este modelo foi escolhido automaticamente."
+              : "Routes to best model based on task",
             category: "Auto",
             disabled: false,
             footer: undefined,
@@ -168,6 +180,7 @@ export function DialogModel(props: { providerID?: string }) {
                 variant: "info",
                 message: `Auto → ${result.modelID} (${result.label})`,
               })
+              setAutoChosenModel({ providerID: result.providerID, modelID: result.modelID })
               onSelect(result.providerID, result.modelID)
             },
           },
