@@ -9,6 +9,7 @@ import type { AcceptMode } from "../accept-mode-store"
 import { parseSkill, loadSkillsDir } from "../skill-loader"
 import { checkSkillsHealth } from "../doctor"
 import { route } from "../auto-router"
+import { classifyRisk, overallRisk } from "../diff-risk"
 
 // ---------------------------------------------------------------------------
 // route (auto-router)
@@ -342,5 +343,176 @@ describe("checkSkillsHealth", () => {
     expect(result.ok).toBe(false)
     expect(result.message).toContain("1 skill(s) loaded")
     expect(result.message).toContain("1 invalid")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// classifyRisk
+// ---------------------------------------------------------------------------
+
+describe("classifyRisk", () => {
+  test("package.json → high", () => {
+    expect(classifyRisk("package.json")).toBe("high")
+    expect(classifyRisk("packages/core/package.json")).toBe("high")
+  })
+
+  test("lock files → high", () => {
+    expect(classifyRisk("bun.lockb")).toBe("high")
+    expect(classifyRisk("yarn.lock")).toBe("high")
+    expect(classifyRisk("package-lock.json")).toBe("high")
+  })
+
+  test(".github/ → high", () => {
+    expect(classifyRisk(".github/workflows/ci.yml")).toBe("high")
+  })
+
+  test("auth files → high", () => {
+    expect(classifyRisk("src/auth.ts")).toBe("high")
+    expect(classifyRisk("src/auth/middleware.ts")).toBe("high")
+  })
+
+  test("migration files → high", () => {
+    expect(classifyRisk("db/migrations/001_init.sql")).toBe("high")
+  })
+
+  test(".env files → high", () => {
+    expect(classifyRisk(".env")).toBe("high")
+    expect(classifyRisk(".env.local")).toBe("high")
+  })
+
+  test("Dockerfile → high", () => {
+    expect(classifyRisk("Dockerfile")).toBe("high")
+    expect(classifyRisk("Dockerfile.prod")).toBe("high")
+  })
+
+  test("docker-compose → high", () => {
+    expect(classifyRisk("docker-compose.yml")).toBe("high")
+  })
+
+  test("yaml config → medium", () => {
+    expect(classifyRisk("config/app.yaml")).toBe("medium")
+    expect(classifyRisk("config/app.yml")).toBe("medium")
+  })
+
+  test("tsconfig → medium", () => {
+    expect(classifyRisk("tsconfig.json")).toBe("medium")
+    expect(classifyRisk("tsconfig.build.json")).toBe("medium")
+  })
+
+  test("vite/webpack config → medium", () => {
+    expect(classifyRisk("vite.config.ts")).toBe("medium")
+    expect(classifyRisk("webpack.config.js")).toBe("medium")
+  })
+
+  test("middleware → medium", () => {
+    expect(classifyRisk("src/middleware/logger.ts")).toBe("medium")
+    expect(classifyRisk("src/auth-middleware.ts")).toBe("medium")
+  })
+
+  test("schema files → medium", () => {
+    expect(classifyRisk("db/schema.sql")).toBe("medium")
+    expect(classifyRisk("src/schema.ts")).toBe("medium")
+  })
+
+  test("regular ts file → low", () => {
+    expect(classifyRisk("src/components/Button.tsx")).toBe("low")
+    expect(classifyRisk("src/utils/format.ts")).toBe("low")
+  })
+
+  test("windows backslash paths normalized", () => {
+    expect(classifyRisk(".github\\workflows\\ci.yml")).toBe("high")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// overallRisk
+// ---------------------------------------------------------------------------
+
+describe("overallRisk", () => {
+  test("empty → low", () => {
+    expect(overallRisk([])).toBe("low")
+  })
+
+  test("all low → low", () => {
+    expect(overallRisk(["low", "low", "low"])).toBe("low")
+  })
+
+  test("medium present → medium", () => {
+    expect(overallRisk(["low", "medium"])).toBe("medium")
+  })
+
+  test("high present → high", () => {
+    expect(overallRisk(["low", "medium", "high"])).toBe("high")
+  })
+
+  test("high dominates medium", () => {
+    expect(overallRisk(["medium", "high", "medium"])).toBe("high")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// classify (fallback) — suggestion field
+// ---------------------------------------------------------------------------
+
+describe("classify suggestion field", () => {
+  test("ProviderHeaderTimeoutError has suggestion", () => {
+    const result = classify({ name: "ProviderHeaderTimeoutError" })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("gemini")
+  })
+
+  test("ProviderResponseStreamError has suggestion", () => {
+    const result = classify({ name: "ProviderResponseStreamError" })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("haiku")
+  })
+
+  test("rate limit (statusCode 429) has suggestion", () => {
+    const result = classify({ statusCode: 429 })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("gemini")
+  })
+
+  test("rate limit (message) has suggestion", () => {
+    const result = classify({ message: "Rate limit exceeded" })
+    expect(result?.suggestion).toBeTruthy()
+  })
+
+  test("quota exceeded has suggestion", () => {
+    const result = classify({ responseBody: "insufficient_quota detected" })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("free")
+  })
+
+  test("plan restriction has suggestion", () => {
+    const result = classify({ responseBody: "usage_not_included in plan" })
+    expect(result?.suggestion).toBeTruthy()
+  })
+
+  test("server overloaded has suggestion", () => {
+    const result = classify({ responseBody: "server_is_overloaded" })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("deepseek")
+  })
+
+  test("context overflow has suggestion", () => {
+    const result = classify({ statusCode: 413 })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("200k")
+  })
+
+  test("auth error has suggestion with login command", () => {
+    const result = classify({ statusCode: 401 })
+    expect(result?.suggestion).toBeTruthy()
+    expect(result?.suggestion).toContain("login")
+  })
+
+  test("forbidden has no suggestion (intentional)", () => {
+    const result = classify({ statusCode: 403 })
+    expect(result?.suggestion).toBeUndefined()
+  })
+
+  test("unknown error returns undefined", () => {
+    expect(classify({ name: "SomeRandomError" })).toBeUndefined()
   })
 })
