@@ -1,5 +1,7 @@
+import { join } from "node:path"
 import type { TuiPlugin, TuiDialogStack } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
+import { loadSkillsDir, type SkillLoadResult } from "./skill-loader"
 
 const id = "spx:doctor"
 
@@ -8,6 +10,33 @@ type CheckResult = {
   ok: boolean
   message: string
   fix?: string
+}
+
+export function checkSkillsHealth(result: SkillLoadResult): CheckResult {
+  if (result.skills.length === 0 && result.errors.length === 0) {
+    return { name: "Skills", ok: true, message: "No skills installed (spx/skills/ empty)." }
+  }
+  if (result.errors.length > 0 && result.skills.length === 0) {
+    return {
+      name: "Skills",
+      ok: false,
+      message: `Skills dir found but all ${result.errors.length} skill(s) failed to load.`,
+      fix: result.errors.map((e) => `${e.source}: ${e.reason}`).join("; "),
+    }
+  }
+  if (result.errors.length > 0) {
+    return {
+      name: "Skills",
+      ok: false,
+      message: `${result.skills.length} skill(s) loaded, ${result.errors.length} invalid.`,
+      fix: result.errors.map((e) => `${e.source}: ${e.reason}`).join("; "),
+    }
+  }
+  return {
+    name: "Skills",
+    ok: true,
+    message: `${result.skills.length} skill(s) loaded: ${result.skills.map((s) => s.id).join(", ")}.`,
+  }
 }
 
 async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> {
@@ -99,6 +128,10 @@ async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> 
       })
     }
   }
+
+  const skillsDir = join(process.cwd(), "spx", "skills")
+  const skillsResult = await loadSkillsDir(skillsDir)
+  results.push(checkSkillsHealth(skillsResult))
 
   return results
 }
