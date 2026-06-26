@@ -5,26 +5,32 @@ import { ACCEPT_MODE_KEY, setAcceptMode, acceptMode, type AcceptMode } from "./a
 const id = "spx:auto-accept"
 
 const DANGER_PATTERNS = [
-  /rm\s+-rf/i,
-  /rm\s+-r/i,
-  /sudo\s+rm/i,
-  /mkfs/i,
-  /dd\s+if=/i,
+  /rm\s+-[rRfF]*[rR][fF]?/i,
+  /\bsudo\b/i,
+  /\bmkfs\b/i,
+  /\bdd\s+if=/i,
   />>\s*\/dev\//i,
   /:\s*>\s*\//i,
-  /format\s+[a-z]:/i,
-  /fdisk/i,
-  /parted/i,
-  /shred/i,
-  /wipefs/i,
+  /\bfdisk\b/i,
+  /\bparted\b/i,
+  /\bshred\b/i,
+  /\bwipefs\b/i,
+  /del\s+\/[sqf]/i,
+  /rmdir\s+\/[sq]/i,
+  /\brd\s+\/[sq]/i,
+  /\bdiskpart\b/i,
+  /format\s+[a-zA-Z]:/i,
+  /\/(etc|usr|bin|boot|dev|proc|sys|lib)(\/|$)/,
+  /\/[Ss]ystem\//,
+  /\/[Ll]ibrary\//,
+  /[Cc]:[/\\][Ww]indows[/\\]/,
+  /[Cc]:[/\\][Ss]ystem32[/\\]/,
+  /[Cc]:[/\\][Pp]rogram [Ff]iles[/\\]/,
 ]
 
-const DANGER_PATHS = ["/etc/", "/usr/", "/bin/", "/boot/", "/dev/", "/proc/", "/sys/", "/lib/"]
-
-function isDangerous(patterns: string[]): boolean {
+export function isDangerous(patterns: string[]): boolean {
   for (const pattern of patterns) {
     if (DANGER_PATTERNS.some((re) => re.test(pattern))) return true
-    if (DANGER_PATHS.some((p) => pattern.includes(p))) return true
   }
   return false
 }
