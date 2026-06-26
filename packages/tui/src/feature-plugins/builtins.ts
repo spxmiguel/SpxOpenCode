@@ -11,6 +11,10 @@ import DiffViewer from "./system/diff-viewer"
 import Notifications from "./system/notifications"
 import PluginManager from "./system/plugins"
 import WhichKey from "./system/which-key"
+import SpxStatusBar from "./spx/status-bar"
+import SpxAutoAccept from "./spx/auto-accept"
+import SpxFallback from "./spx/fallback"
+import SpxDoctor from "./spx/doctor"
 
 export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
   id: string
@@ -32,5 +36,9 @@ export function createBuiltinPlugins(options: { experimentalEventSystem: boolean
     PluginManager,
     WhichKey,
     DiffViewer,
+    SpxStatusBar,
+    SpxAutoAccept,
+    SpxFallback,
+    SpxDoctor,
   ]
 }
