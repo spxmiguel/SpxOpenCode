@@ -62,22 +62,52 @@ See [ROADMAP.md](ROADMAP.md) for full versioned roadmap.
 
 ## Installation
 
-SpxOpenCode is a source fork — install the same way as OpenCode:
+> **Alpha:** SpxOpenCode has no published binaries yet. The scripts below install from source and will automatically switch to binary downloads once releases are available.
+
+### Quick Install
+
+**macOS / Linux**
+```bash
+curl -fsSL https://raw.githubusercontent.com/spxmiguel/SpxOpenCode/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell)**
+```powershell
+irm https://raw.githubusercontent.com/spxmiguel/SpxOpenCode/main/scripts/install.ps1 | iex
+```
+
+Both scripts:
+- Clone the repo to `~/.spxopencode/src` (macOS/Linux) or `%USERPROFILE%\.spxopencode\src` (Windows)
+- Install dependencies with Bun
+- Create a `spxopencode` command (and `spx` alias) in `~/.spxopencode/bin`
+- Add that directory to your PATH (skip with `--no-modify-path` / `-NoModifyPath`)
+
+**Requirements:** [git](https://git-scm.com) and [bun](https://bun.sh) (>= 1.3.14)
+
+### Update
+
+Re-run the install command — it pulls the latest source and re-installs.
+
+### Uninstall
 
 ```bash
-# Clone SpxOpenCode
+rm -rf ~/.spxopencode
+```
+
+Then remove the `export PATH=...` line from your shell config.
+
+### Manual / Dev Install
+
+```bash
 git clone https://github.com/spxmiguel/SpxOpenCode.git
 cd SpxOpenCode
-
-# Install dependencies (requires Bun >= 1.3.14)
 bun install
-
-# Build
-bun run build
-
-# Run
 bun run dev
 ```
+
+See [docs/installation.md](docs/installation.md) for the full guide including troubleshooting.
+
+---
 
 SpxOpenCode features are active by default. To use as vanilla OpenCode, disable spx plugins in your config:
 
