@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "bun:test"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { mkdir, writeFile, rm } from "node:fs/promises"
+import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises"
 import { isDangerous } from "../auto-accept"
 import { classify } from "../fallback"
 import { acceptMode, setAcceptMode, lastError, reportError } from "../accept-mode-store"
@@ -202,8 +202,7 @@ describe("loadSkillsDir", () => {
   let dir: string
 
   beforeEach(async () => {
-    dir = join(tmpdir(), `spx-test-skills-${Date.now()}`)
-    await mkdir(dir, { recursive: true })
+    dir = await mkdtemp(join(tmpdir(), "spx-test-skills-"))
   })
 
   test("loads valid skill", async () => {
