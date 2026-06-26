@@ -11,6 +11,36 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [0.1.0-alpha] — 2026-06-26
+
+### Added
+
+- **macOS shortcuts** — `super` modifier maps Cmd+C/V/K/L/Enter to copy, paste, clear line, session list, and submit. Ctrl+C and Ctrl+D are preserved as process interrupt and EOF.
+- **SpxStatusBar v2 reactive** — status bar now reacts to accept mode changes, active git branch, provider count, and last provider error (30 s auto-clear with `⚠` indicator).
+- **lastError signal** — `reportError(title, ttlMs)` in `accept-mode-store.ts`; `classify()` in `fallback.ts` now calls it before `api.attention.notify()`.
+- **SPX CI pipeline** — `.github/workflows/spx-ci.yml` with typecheck, lint (non-blocking), and test jobs; triggers on push/PR to monitored SPX paths and via `workflow_dispatch`.
+- **bun:test unit tests** — `packages/tui/src/feature-plugins/spx/__tests__/spx.test.ts` covers `isDangerous` (10 cases), `classify` (7 cases), cycle logic (3 cases), `reportError` (2 cases).
+- **docs/shortcuts.md** — full reference for shortcuts, accept modes, YOLO safety rules, status bar fields, and CI commands.
+
+### Changed
+
+- **YOLO DANGER_PATTERNS hardened** — consolidated into single regex array; added Windows-specific patterns (`del /s`, `rmdir /q`, `rd /s`, `diskpart`, `format X:`), macOS paths (`/System/`, `/Library/`), and cross-platform system paths.
+- `isDangerous()` exported from `auto-accept.ts` for testability.
+- `classify()` exported from `fallback.ts` for testability.
+
+### Fixed
+
+- LSP status comparison in `doctor.ts` used wrong literal `"failed"` — corrected to `"error"` (matches `"connected" | "error"` type).
+- `keymap.test.tsx` snapshot updated to reflect `session.list` having 2 bindings after `super+l` addition.
+
+### Known Issues
+
+- `bun` not in shell PATH on developer machine — CI covers type-check and tests.
+- Upstream `pr-standards` workflow fails on Dependabot PRs (inherited from OpenCode fork — not our issue).
+- Node.js 20 deprecation warning in CI (GitHub Actions infra change — no action needed from us).
+
+---
+
 ## [0.1.0] — 2026-06-25
 
 ### Added
