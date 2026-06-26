@@ -1,4 +1,4 @@
-import { createMemo } from "solid-js"
+import { createMemo, createSignal } from "solid-js"
 import { useLocal } from "../context/local"
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect } from "../ui/dialog-select"
@@ -135,7 +135,7 @@ export function DialogModel(props: { providerID?: string }) {
     const current = local.model.current()
     const isAutoActive =
       chosen !== null &&
-      current !== null &&
+      current != null &&
       chosen.providerID === current.providerID &&
       chosen.modelID === current.modelID
 

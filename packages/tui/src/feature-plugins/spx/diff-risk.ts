@@ -3,6 +3,7 @@ export type RiskLevel = "low" | "medium" | "high"
 const HIGH_PATTERNS: RegExp[] = [
   /package\.json$/,
   /\.(lock|lockb)$/,
+  /package-lock\.json$/,
   /^\.github\//,
   /\/auth(\/|\.)/i,
   /auth\.(ts|js|tsx|jsx)$/i,

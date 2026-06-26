@@ -20,7 +20,7 @@ function statusLabel(status: VcsFileStatus["status"]) {
   return "M"
 }
 
-function riskColor(level: RiskLevel, theme: ReturnType<typeof useTheme>["theme"]): string {
+function riskColor(level: RiskLevel, theme: ReturnType<typeof useTheme>["theme"]) {
   switch (level) {
     case "high":
       return theme.error

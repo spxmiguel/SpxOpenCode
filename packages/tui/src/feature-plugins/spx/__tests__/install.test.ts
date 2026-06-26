@@ -2,7 +2,7 @@ import { describe, test, expect } from "bun:test"
 import { readFileSync } from "fs"
 import { join } from "path"
 
-const ROOT = join(import.meta.dir, "../../../../../../..")
+const ROOT = join(import.meta.dir, "../../../../../..")
 const REPO_URL = "https://github.com/spxmiguel/SpxOpenCode"
 const ENTRY_POINT = "packages/opencode/src/index.ts"
 const SH = readFileSync(join(ROOT, "scripts/install.sh"), "utf8")
