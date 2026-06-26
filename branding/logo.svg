@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="SpxOpenCode logo">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F8FFF"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="textgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4F8FFF"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hexagon icon -->
+  <polygon points="36,8 60,21 60,47 36,60 12,47 12,21" fill="none" stroke="url(#grad)" stroke-width="2.5"/>
+  <!-- Terminal prompt inside hexagon -->
+  <text x="20" y="40" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="14" font-weight="700" fill="url(#grad)">SPX</text>
+
+  <!-- Wordmark -->
+  <text x="78" y="44" font-family="'JetBrains Mono', 'Fira Code', 'Courier New', monospace" font-size="22" font-weight="700" fill="url(#textgrad)">SpxOpenCode</text>
+
+  <!-- Cursor blink decoration -->
+  <rect x="222" y="28" width="10" height="2.5" fill="#4F8FFF" opacity="0.7"/>
+</svg>

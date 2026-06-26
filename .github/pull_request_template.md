@@ -26,4 +26,12 @@ _If this is a UI change, please include a screenshot or recording._
 - [ ] I have tested my changes locally
 - [ ] I have not included unrelated changes in this PR
 
+### SPX-specific checklist (skip if not touching SPX plugins)
+
+- [ ] Plugin can be disabled via `enabled: false` without breaking anything
+- [ ] No background timers or intervals added
+- [ ] No autonomous AI calls added
+- [ ] If modifying `builtins.ts` or `keybind.ts`, change is additive only (no lines removed)
+- [ ] New plugin follows 7-question filter in VISION.md
+
 _If you do not follow this template your PR will be automatically rejected._

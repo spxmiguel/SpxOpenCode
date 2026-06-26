@@ -1,3 +1,11 @@
-# web + desktop packages
+# web + desktop packages (upstream OpenCode maintainers)
 packages/app/      @Hona @Brendonovich
 packages/desktop/  @Hona @Brendonovich
+
+# SPX plugins and spx-specific files
+packages/tui/src/feature-plugins/spx/  @spxmiguel
+packages/tui/src/feature-plugins/builtins.ts  @spxmiguel
+packages/tui/src/keybind.ts  @spxmiguel
+branding/  @spxmiguel
+docs/  @spxmiguel
+.github/workflows/spx-*.yml  @spxmiguel

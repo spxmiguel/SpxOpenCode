@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="SpxOpenCode banner">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D1117"/>
+      <stop offset="100%" style="stop-color:#161B22"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4F8FFF"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="hexgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F8FFF" stop-opacity="0.3"/>
+      <stop offset="100%" style="stop-color:#7C3AED" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="320" fill="url(#bg)"/>
+
+  <!-- Decorative hex grid (right side) -->
+  <g opacity="0.08" stroke="#4F8FFF" stroke-width="1" fill="none">
+    <polygon points="920,40 960,63 960,109 920,132 880,109 880,63"/>
+    <polygon points="990,0 1030,23 1030,69 990,92 950,69 950,23"/>
+    <polygon points="1060,40 1100,63 1100,109 1060,132 1020,109 1020,63"/>
+    <polygon points="1130,0 1170,23 1170,69 1130,92 1090,69 1090,23"/>
+    <polygon points="1200,40 1240,63 1240,109 1200,132 1160,109 1160,63"/>
+    <polygon points="955,115 995,138 995,184 955,207 915,184 915,138"/>
+    <polygon points="1025,155 1065,178 1065,224 1025,247 985,224 985,178"/>
+    <polygon points="1095,115 1135,138 1135,184 1095,207 1055,184 1055,138"/>
+    <polygon points="1165,155 1205,178 1205,224 1165,247 1125,224 1125,178"/>
+    <polygon points="920,230 960,253 960,299 920,322 880,299 880,253"/>
+    <polygon points="1060,230 1100,253 1100,299 1060,322 1020,299 1020,253"/>
+    <polygon points="1200,230 1240,253 1240,299 1200,322 1160,299 1160,253"/>
+  </g>
+
+  <!-- Top accent line -->
+  <rect x="0" y="0" width="1280" height="3" fill="url(#accent)"/>
+
+  <!-- Main hexagon icon -->
+  <polygon points="130,80 190,114 190,182 130,216 70,182 70,114"
+           fill="url(#hexgrad)" stroke="url(#accent)" stroke-width="2"/>
+  <text x="130" y="158" font-family="'JetBrains Mono',monospace" font-size="36" font-weight="800"
+        fill="url(#accent)" text-anchor="middle" dominant-baseline="middle">SPX</text>
+
+  <!-- Wordmark -->
+  <text x="230" y="148" font-family="'JetBrains Mono','Fira Code',monospace"
+        font-size="52" font-weight="800" fill="#E6EDF3">SpxOpenCode</text>
+
+  <!-- Tagline -->
+  <text x="230" y="200" font-family="'Inter','Helvetica Neue',sans-serif"
+        font-size="20" font-weight="400" fill="#8B949E" letter-spacing="1">
+    OpenCode, supercharged. Open source. Zero compromise.
+  </text>
+
+  <!-- Bottom status bar decoration -->
+  <rect x="0" y="295" width="1280" height="25" fill="#0D1117" opacity="0.8"/>
+  <text x="20" y="312" font-family="'JetBrains Mono',monospace" font-size="12" fill="#4F8FFF">[MANUAL]</text>
+  <text x="100" y="312" font-family="'JetBrains Mono',monospace" font-size="12" fill="#8B949E">⎇ main</text>
+  <text x="160" y="312" font-family="'JetBrains Mono',monospace" font-size="12" fill="#8B949E">3 providers</text>
+  <text x="1180" y="312" font-family="'JetBrains Mono',monospace" font-size="12" fill="#8B949E">v0.1.0-alpha</text>
+</svg>
