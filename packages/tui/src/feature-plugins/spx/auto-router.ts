@@ -38,7 +38,7 @@ const LABELS: Record<RouteReason, string> = {
 function classify(prompt: string): RouteReason {
   const lower = prompt.toLowerCase()
   for (const [reason, keywords] of Object.entries(KEYWORDS) as [Exclude<RouteReason, "unknown">, string[]][]) {
-    if (keywords.some((kw) => lower.includes(kw))) return reason
+    if (keywords.some((kw) => (kw.includes(" ") ? lower.includes(kw) : new RegExp(`\\b${kw}\\b`).test(lower)))) return reason
   }
   return "unknown"
 }
