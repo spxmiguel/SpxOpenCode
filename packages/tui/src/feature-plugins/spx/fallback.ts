@@ -7,6 +7,7 @@ const id = "spx:fallback"
 type FriendlyError = {
   title: string
   message: string
+  suggestion?: string
 }
 
 export function classify(error: any): FriendlyError | undefined {
@@ -19,6 +20,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Provider timeout",
       message: "No response from provider. Check connection or try a different model.",
+      suggestion: "Try: google/gemini-2.0-flash (lower latency)",
     }
   }
 
@@ -26,6 +28,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Stream interrupted",
       message: "Response stream broke. The provider may be overloaded — retry shortly.",
+      suggestion: "Try: anthropic/claude-haiku-4-5 (lighter, more stable)",
     }
   }
 
@@ -33,6 +36,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Auth error",
       message: "Provider rejected credentials. Run `opencode auth login` to re-authenticate.",
+      suggestion: "Run: opencode auth login",
     }
   }
 
@@ -47,6 +51,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Rate limited",
       message: "Too many requests. Slow down or upgrade your plan.",
+      suggestion: "Try: google/gemini-2.0-flash or deepseek/deepseek-chat (higher limits)",
     }
   }
 
@@ -54,6 +59,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Context overflow",
       message: "Input too long for this model. Start a new session or summarize earlier messages.",
+      suggestion: "Try: anthropic/claude-sonnet-4-5 (200k context window)",
     }
   }
 
@@ -61,6 +67,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Quota exceeded",
       message: "You've used up your API quota. Check billing at your provider's dashboard.",
+      suggestion: "Try: google/gemini-2.0-flash (free tier available)",
     }
   }
 
@@ -68,6 +75,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Plan restriction",
       message: "Your current plan doesn't include API access. Upgrade to use this model.",
+      suggestion: "Try: google/gemini-2.0-flash (free tier available)",
     }
   }
 
@@ -75,6 +83,7 @@ export function classify(error: any): FriendlyError | undefined {
     return {
       title: "Provider overloaded",
       message: "Server is busy. Retry in a few seconds.",
+      suggestion: "Try: deepseek/deepseek-chat (independent infrastructure)",
     }
   }
 
@@ -90,7 +99,7 @@ const tui: TuiPlugin = async (api) => {
     reportError(friendly.title)
     api.attention.notify({
       title: friendly.title,
-      message: friendly.message,
+      message: friendly.suggestion ? `${friendly.message}\n${friendly.suggestion}` : friendly.message,
       notification: { when: "always" },
     })
   })
