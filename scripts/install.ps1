@@ -83,6 +83,7 @@ try {
 }
 
 # Create wrapper script (batch file for Windows PATH compatibility)
+# Entry point: packages/opencode/src/index.ts
 $WrapperBat = Join-Path $BinDir "spxopencode.cmd"
 @"
 @echo off
