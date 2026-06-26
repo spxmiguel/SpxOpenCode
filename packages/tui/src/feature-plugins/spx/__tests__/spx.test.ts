@@ -8,6 +8,58 @@ import { acceptMode, setAcceptMode, lastError, reportError } from "../accept-mod
 import type { AcceptMode } from "../accept-mode-store"
 import { parseSkill, loadSkillsDir } from "../skill-loader"
 import { checkSkillsHealth } from "../doctor"
+import { route } from "../auto-router"
+
+// ---------------------------------------------------------------------------
+// route (auto-router)
+// ---------------------------------------------------------------------------
+
+const FALLBACK = { providerID: "current", modelID: "current-model" }
+
+describe("route", () => {
+  test("architecture keywords → anthropic", () => {
+    const result = route("refactor the auth module", FALLBACK)
+    expect(result.providerID).toBe("anthropic")
+    expect(result.reason).toBe("architecture")
+  })
+
+  test("ui keywords → antigravity", () => {
+    const result = route("build a form component with nice layout", FALLBACK)
+    expect(result.providerID).toBe("antigravity")
+    expect(result.reason).toBe("ui")
+  })
+
+  test("research keywords → google", () => {
+    const result = route("explain how does the event loop work", FALLBACK)
+    expect(result.providerID).toBe("google")
+    expect(result.reason).toBe("research")
+  })
+
+  test("implementation keywords → openai", () => {
+    const result = route("implement a new feature for user login", FALLBACK)
+    expect(result.providerID).toBe("openai")
+    expect(result.reason).toBe("implementation")
+  })
+
+  test("analysis keywords → deepseek", () => {
+    const result = route("analyze performance metrics and trace bottlenecks", FALLBACK)
+    expect(result.providerID).toBe("deepseek")
+    expect(result.reason).toBe("analysis")
+  })
+
+  test("unknown prompt → returns fallback model", () => {
+    const result = route("hello there", FALLBACK)
+    expect(result.providerID).toBe(FALLBACK.providerID)
+    expect(result.modelID).toBe(FALLBACK.modelID)
+    expect(result.reason).toBe("unknown")
+  })
+
+  test("empty prompt → stays on current (unknown)", () => {
+    const result = route("", FALLBACK)
+    expect(result.reason).toBe("unknown")
+    expect(result.providerID).toBe(FALLBACK.providerID)
+  })
+})
 
 // ---------------------------------------------------------------------------
 // isDangerous
