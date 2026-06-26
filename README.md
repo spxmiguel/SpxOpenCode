@@ -82,7 +82,7 @@ Both scripts:
 - Create a `spxopencode` command (and `spx` alias) in `~/.spxopencode/bin`
 - Add that directory to your PATH (skip with `--no-modify-path` / `-NoModifyPath`)
 
-**Requirements:** [git](https://git-scm.com) and [bun](https://bun.sh) (>= 1.3.14)
+**Requirements:** [git](https://git-scm.com). The install scripts handle everything else (including runtime dependencies) automatically.
 
 ### Update
 
@@ -101,9 +101,11 @@ Then remove the `export PATH=...` line from your shell config.
 ```bash
 git clone https://github.com/spxmiguel/SpxOpenCode.git
 cd SpxOpenCode
-bun install
-bun run dev
+npm install
+npm run dev
 ```
+
+> Dev builds require [bun](https://bun.sh) (>= 1.3.14). Install it with `npm install -g bun` or via [brew](https://brew.sh): `brew install bun`.
 
 See [docs/installation.md](docs/installation.md) for the full guide including troubleshooting.
 
@@ -128,13 +130,13 @@ SpxOpenCode features are active by default. To use as vanilla OpenCode, disable 
 
 ```bash
 # Watch mode
-bun run dev
+npm run dev
 
 # Type check
-bun run tsc --noEmit
+npm run typecheck
 
-# Run tests
-bun test
+# Run SPX tests
+cd packages/tui && npx bun test
 ```
 
 SpxOpenCode-specific code lives in:
