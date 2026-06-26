@@ -9,6 +9,7 @@ on:
       - "packages/tui/src/feature-plugins/builtins.ts"
       - "packages/tui/src/config/keybind.ts"
       - "spx/skills/**"
+      - "scripts/**"
   push:
     branches: [main]
     paths:
@@ -16,6 +17,7 @@ on:
       - "packages/tui/src/feature-plugins/builtins.ts"
       - "packages/tui/src/config/keybind.ts"
       - "spx/skills/**"
+      - "scripts/**"
 
 jobs:
   typecheck:
@@ -69,3 +71,44 @@ jobs:
       - name: Test
         working-directory: packages/tui
         run: bun test
+
+  validate-installer:
+    name: Validate installer scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck (install.sh)
+        run: shellcheck scripts/install.sh
+
+      - name: PowerShell syntax check (install.ps1)
+        shell: pwsh
+        run: |
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile(
+            "${{ github.workspace }}/scripts/install.ps1",
+            [ref]$null,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: URL consistency check
+        run: |
+          REPO_URL="https://github.com/spxmiguel/SpxOpenCode"
+          for file in scripts/install.sh scripts/install.ps1 README.md; do
+            if grep -q "spxmiguel/SpxOpenCode" "$file"; then
+              echo "OK: $file references correct repo"
+            else
+              echo "FAIL: $file missing repo URL reference"
+              exit 1
+            fi
+          done
+
+      - name: install.sh references correct entry point
+        run: grep -q "packages/opencode/src/index.ts" scripts/install.sh
+
+      - name: install.ps1 references correct entry point
+        run: grep -q "packages/opencode/src/index.ts" scripts/install.ps1
