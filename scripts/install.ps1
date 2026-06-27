@@ -39,7 +39,7 @@ Parameters:
     -Help            Show this help
 
 Alpha notice: no compiled binaries are published yet. Installs from source.
-Requires: git, bun (https://bun.sh)
+Requires: git. bun is auto-installed if missing (via winget, scoop, or bun.sh installer).
 "@
 }
 
@@ -50,15 +50,35 @@ if ($Help) {
 
 Write-Alpha
 
-# Dependency checks
-foreach ($cmd in @("git", "bun")) {
-    if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-        Write-Host "Error: '$cmd' is required but not installed." -ForegroundColor Red
-        if ($cmd -eq "bun") {
-            Write-Host "Install bun: https://bun.sh/docs/installation#windows" -ForegroundColor Gray
-        }
+# Auto-install bun if missing
+if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
+    Write-Host "bun not found — installing..." -ForegroundColor Yellow
+    $installed = $false
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget install --id Oven-sh.Bun --silent --accept-source-agreements --accept-package-agreements
+        $installed = $true
+    } elseif (Get-Command scoop -ErrorAction SilentlyContinue) {
+        scoop install bun
+        $installed = $true
+    }
+    if (-not $installed) {
+        # Fallback: official PowerShell installer
+        Invoke-RestMethod https://bun.sh/install.ps1 | Invoke-Expression
+    }
+    # Refresh PATH so bun is available now
+    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: bun install failed. Install manually: https://bun.sh" -ForegroundColor Red
         exit 1
     }
+    Write-Host "bun installed." -ForegroundColor Green
+}
+
+# Dependency checks
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Host "Error: 'git' is required but not installed." -ForegroundColor Red
+    Write-Host "Install git: https://git-scm.com/download/win" -ForegroundColor Gray
+    exit 1
 }
 
 # Create directories

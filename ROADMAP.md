@@ -72,7 +72,7 @@ Before v1.0 final:
 
 ---
 
-## Pixel Agents — Foundation 🟡 (PARTIAL)
+## Pixel Agents — Foundation ✅ (Done)
 
 Lightweight, stateful event observers. Disabled by default, zero AI calls in LOCAL mode.
 
@@ -96,9 +96,11 @@ Lightweight, stateful event observers. Disabled by default, zero AI calls in LOC
 
 ### Planned (future, not authorized)
 
-- **Pixel Agents UI** — StatusBar indicator; `:pixel` TUI panel
-- **Tamagotchi System** — personality-driven idle state (requires UI + local state machine)
-- **Groq Personality Mode** — optional Groq adapter behind `groqEnabled: true` + API key
+- 🔜 **Pixel Agents UI** — StatusBar indicator; `:pixel` TUI panel showing active agents and event counts
+- 🔜 **Pixel Agents Characters** — named character definitions with traits; loaded from config; no AI in character display
+- 🔜 **Groq Personality Mode** — optional Groq adapter behind `groqEnabled: true` + API key
+- 🔜 **Pixel Agents persistence** — file/SQLite-backed memory store replacing `InMemoryPixelAgentMemoryStore`
+- 🔜 **Plugin lifecycle wiring** — connect `PixelAgentHost` to `SpxPlugin` setup/teardown events
 
 ---
 

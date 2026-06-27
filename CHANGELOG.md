@@ -7,7 +7,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased]
+## [1.0.0-rc.2] — 2026-06-27
 
 ### Added
 
@@ -20,6 +20,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - `host.ts` — `PixelAgentHost`: registers agents, routes events to adapter, enforces `maxEventsPerSession`, emits `quota.exceeded`
   - 25+ tests covering all modules (`pixel-agents.test.ts`)
   - Docs: `docs/pixel-agents.md`, `docs/pixel-events.md`, `docs/pixel-api.md`, `docs/pixel-agents-analysis.md`
+
+### Fixed
+
+- **CI: keymap snapshot test** — updated snapshot to match current keymap output; was failing with stale snapshot
+- **CI: README alpha-warning test** — fixed test assertion to match updated README alpha notice text
+- **Installer: bun auto-install** — `install.sh` and `install.ps1` no longer exit with error when bun is missing; instead auto-install via `brew` (macOS), `winget`/`scoop` (Windows), or `bun.sh` official installer (fallback)
 
 ### Known limitations
 

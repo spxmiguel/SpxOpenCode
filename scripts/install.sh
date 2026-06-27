@@ -33,7 +33,7 @@ Examples:
     curl -fsSL https://raw.githubusercontent.com/spxmiguel/SpxOpenCode/main/scripts/install.sh | bash -s -- --no-modify-path
 
 Alpha notice: no compiled binaries are published yet. Installs from source.
-Requires: git, bun (https://bun.sh)
+Requires: git. bun is auto-installed if missing (via brew on macOS, or bun.sh installer).
 EOF
 }
 
@@ -60,13 +60,27 @@ echo -e ""
 echo -e "${ORANGE}⚠  SpxOpenCode is in alpha — expect breaking changes.${NC}"
 echo -e ""
 
+# Auto-install bun if missing
+if ! command -v bun >/dev/null 2>&1; then
+    echo -e "${ORANGE}bun not found — installing...${NC}"
+    if [[ "$(uname)" == "Darwin" ]] && command -v brew >/dev/null 2>&1; then
+        brew install oven-sh/bun/bun
+    else
+        curl -fsSL https://bun.sh/install | bash
+        export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+        export PATH="$BUN_INSTALL/bin:$PATH"
+    fi
+    if ! command -v bun >/dev/null 2>&1; then
+        echo -e "${RED}Error: bun install failed. Install manually: https://bun.sh${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}bun installed.${NC}"
+fi
+
 # Dependency checks
-for cmd in git bun; do
+for cmd in git; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo -e "${RED}Error: '$cmd' is required but not installed.${NC}"
-        if [ "$cmd" = "bun" ]; then
-            echo -e "${MUTED}Install bun: curl -fsSL https://bun.sh/install | bash${NC}"
-        fi
         exit 1
     fi
 done

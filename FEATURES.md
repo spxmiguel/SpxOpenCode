@@ -337,6 +337,11 @@ Features explicitly excluded from SpxOpenCode:
 - Office Mode / document-aware context injection
 - GUI or web interface
 - Cloud sync or telemetry
-- Pixel Agents
+- Pixel Agents UI (`:pixel` panel, StatusBar indicator) — foundation exists; UI not yet built
+- Pixel Agents characters / personalities / Tamagotchi features
+- Groq adapter for Pixel Agents (mode is typed; no implementation)
+- Plugin lifecycle wiring for Pixel Agents (`PixelAgentHost` not connected to SpxPlugin events)
+
+> **Note:** Pixel Agents *Foundation* (types, config, event bus, adapter, persistence, host) IS implemented and tested. It is disabled by default (`enabled: false`) and makes zero AI calls. The items above are the unbuilt layers on top of that foundation. See [ROADMAP.md](ROADMAP.md) and [docs/pixel-agents.md](docs/pixel-agents.md).
 
 See [ROADMAP.md](ROADMAP.md) for what is and isn't on the roadmap.
