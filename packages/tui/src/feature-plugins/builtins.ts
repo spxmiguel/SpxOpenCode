@@ -16,6 +16,7 @@ import SpxAutoAccept from "./spx/auto-accept"
 import SpxFallback from "./spx/fallback"
 import SpxDoctor from "./spx/doctor"
 import SpxSkills from "./spx/spx-skills"
+import SpxMemory from "./spx/spx-memory"
 
 export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
   id: string
@@ -42,5 +43,6 @@ export function createBuiltinPlugins(options: { experimentalEventSystem: boolean
     SpxFallback,
     SpxDoctor,
     SpxSkills,
+    SpxMemory,
   ]
 }

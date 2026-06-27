@@ -29,14 +29,14 @@ Goal: reduce daily friction, especially on macOS.
 
 ---
 
-## v0.3 — Skills
+## v0.3 — Skills ✅
 
 Goal: reusable slash commands for common dev tasks. All static, zero AI calls.
 
 - [x] **SpxSkills** — `/skill:commit`, `/skill:pr` slash commands
   - `/skill:commit` — conventional commit message from staged diff (local git, no AI)
   - `/skill:pr` — PR description template from git log
-- [ ] **SpxDoctor v2** — per-provider latency display, model availability check
+- [x] **SpxDoctor v2** — per-provider latency display, model availability check
 
 ---
 
