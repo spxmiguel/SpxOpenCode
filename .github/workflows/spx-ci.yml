@@ -56,8 +56,12 @@ jobs:
         continue-on-error: true
 
   test:
-    name: Test SPX plugins
-    runs-on: ubuntu-latest
+    name: Test SPX plugins (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7.0.0
 
