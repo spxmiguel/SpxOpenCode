@@ -2,7 +2,7 @@ import { join } from "node:path"
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, createSignal, Show } from "solid-js"
-import { acceptMode, lastError, loopActive } from "./accept-mode-store"
+import { ACCEPT_MODE_KEY, acceptMode, lastError, loopActive, setAcceptMode, type AcceptMode } from "./accept-mode-store"
 import { autoChosenModel } from "./auto-chosen-store"
 import { lastDoctorOk } from "./doctor"
 import { loadSkillsDir } from "./skill-loader"
@@ -26,8 +26,16 @@ function AcceptModeIndicator(props: { api: TuiPluginApi }) {
     }
   })
 
+  function cycle() {
+    const mode = acceptMode()
+    const next: AcceptMode = mode === "manual" ? "auto" : mode === "auto" ? "yolo" : "manual"
+    setAcceptMode(next)
+    props.api.kv.set(ACCEPT_MODE_KEY, next)
+    props.api.ui.toast({ title: "Accept mode", message: `Switched to ${next.toUpperCase()}`, duration: 2000 })
+  }
+
   return (
-    <text fg={label().color} flexShrink={0}>
+    <text fg={label().color} flexShrink={0} onMouseUp={cycle}>
       {label().text}
     </text>
   )
