@@ -78,12 +78,10 @@ if ! command -v bun >/dev/null 2>&1; then
 fi
 
 # Dependency checks
-for cmd in git; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        echo -e "${RED}Error: '$cmd' is required but not installed.${NC}"
-        exit 1
-    fi
-done
+if ! command -v git >/dev/null 2>&1; then
+    echo -e "${RED}Error: 'git' is required but not installed.${NC}"
+    exit 1
+fi
 
 mkdir -p "$BIN_DIR"
 
