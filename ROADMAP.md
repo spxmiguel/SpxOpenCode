@@ -18,14 +18,14 @@ Goal: establish the plugin system and prove that SpxOpenCode can add real value 
 
 ---
 
-## v0.2 — Ergonomics
+## v0.2 — Ergonomics ✅
 
 Goal: reduce daily friction, especially on macOS.
 
-- [ ] **Mac Shortcuts** — platform-aware `super` modifier for macOS (`cmd+k`, `cmd+z`, etc.)
-- [ ] **SpxStatusBar v2** — click-to-cycle accept mode directly from status bar
-- [ ] **Auto mode allowlist** — per-project `.spx/allowlist.json` for AUTO mode tool patterns
-- [ ] **YOLO audit log** — local log of auto-approved actions per session (`.spx/audit/`)
+- [x] **Mac Shortcuts** — `super+` variants for common keybinds (`cmd+p`, `cmd+b`, `cmd+n`, `cmd+m`)
+- [x] **SpxStatusBar v2** — click-to-cycle accept mode directly from status bar
+- [x] **Auto mode allowlist** — per-project `.spx/allowlist.json` for AUTO mode tool patterns
+- [x] **YOLO audit log** — local log of auto-approved actions per session (`.spx/audit/`)
 
 ---
 
