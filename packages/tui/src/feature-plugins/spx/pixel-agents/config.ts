@@ -1,4 +1,5 @@
-import type { PixelAgentProviderMode } from "./types"
+import type { PixelAgentCharacter, PixelAgentProviderMode } from "./types"
+import { parseCharacters } from "./characters"
 
 export interface PixelAgentConfig {
   enabled: boolean
@@ -8,6 +9,8 @@ export interface PixelAgentConfig {
   groqApiKey?: string
   maxEventsPerSession: number
   persistMemory: boolean
+  /** User-defined character overrides/additions merged with builtins. */
+  characters: PixelAgentCharacter[]
 }
 
 const DEFAULTS: PixelAgentConfig = {
@@ -17,6 +20,7 @@ const DEFAULTS: PixelAgentConfig = {
   groqEnabled: false,
   maxEventsPerSession: 50,
   persistMemory: false,
+  characters: [],
 }
 
 const VALID_MODES: PixelAgentProviderMode[] = ["local", "groq", "premium"]
@@ -46,5 +50,6 @@ export function parsePixelAgentConfig(raw: unknown): PixelAgentConfig {
         ? Math.floor(r.maxEventsPerSession)
         : DEFAULTS.maxEventsPerSession,
     persistMemory: typeof r.persistMemory === "boolean" ? r.persistMemory : DEFAULTS.persistMemory,
+    characters: parseCharacters(r.characters),
   }
 }

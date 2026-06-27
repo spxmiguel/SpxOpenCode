@@ -5,6 +5,11 @@ import type { PixelAgentEvent } from "../pixel-agents/events"
 import { LocalPixelAgentAdapter } from "../pixel-agents/adapter"
 import { InMemoryPixelAgentMemoryStore } from "../pixel-agents/persistence"
 import { PixelAgentHost } from "../pixel-agents/host"
+import {
+  BUILTIN_CHARACTERS,
+  buildCharacterRegistry,
+  parseCharacters,
+} from "../pixel-agents/characters"
 
 // ── config ──────────────────────────────────────────────────────────────────
 
@@ -167,6 +172,116 @@ describe("InMemoryPixelAgentMemoryStore", () => {
   test("no file I/O — store lives in RAM only", () => {
     // Structural: verify no fs references in implementation
     expect(store.size()).toBe(0)
+  })
+})
+
+// ── characters ───────────────────────────────────────────────────────────────
+
+describe("BUILTIN_CHARACTERS", () => {
+  test("ships three characters", () => {
+    expect(BUILTIN_CHARACTERS).toHaveLength(3)
+  })
+
+  test("all have id, name, personality.name", () => {
+    for (const c of BUILTIN_CHARACTERS) {
+      expect(c.id).toBeTruthy()
+      expect(c.name).toBeTruthy()
+      expect(c.personality.name).toBeTruthy()
+    }
+  })
+
+  test("spx:companion exists with friendly tone", () => {
+    const c = BUILTIN_CHARACTERS.find((x) => x.id === "spx:companion")
+    expect(c).toBeDefined()
+    expect(c!.personality.tone).toBe("friendly")
+  })
+})
+
+describe("buildCharacterRegistry", () => {
+  test("no args → contains all 3 builtins", () => {
+    const reg = buildCharacterRegistry()
+    expect(reg.size).toBe(3)
+  })
+
+  test("user char overrides builtin by id", () => {
+    const reg = buildCharacterRegistry([
+      { id: "spx:companion", name: "Override", personality: { name: "Override", tone: "cool" } },
+    ])
+    expect(reg.get("spx:companion")!.name).toBe("Override")
+  })
+
+  test("user char with new id adds entry", () => {
+    const reg = buildCharacterRegistry([
+      { id: "custom:ninja", name: "Ninja", personality: { name: "Ninja", tone: "stealthy" } },
+    ])
+    expect(reg.size).toBe(4)
+    expect(reg.has("custom:ninja")).toBe(true)
+  })
+
+  test("invalid user char (no id) skipped", () => {
+    const reg = buildCharacterRegistry([{ id: "", name: "Bad", personality: { name: "Bad" } }])
+    expect(reg.size).toBe(3)
+  })
+})
+
+describe("parseCharacters", () => {
+  test("non-array → empty", () => {
+    expect(parseCharacters(null)).toHaveLength(0)
+    expect(parseCharacters("string")).toHaveLength(0)
+    expect(parseCharacters({})).toHaveLength(0)
+  })
+
+  test("valid entries parsed", () => {
+    const result = parseCharacters([
+      { id: "x:y", name: "XY", personality: { name: "XY", tone: "neutral", traits: ["a", "b"] } },
+    ])
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe("x:y")
+    expect(result[0]!.personality.traits).toEqual(["a", "b"])
+  })
+
+  test("entry missing personality.name skipped", () => {
+    const result = parseCharacters([{ id: "x:y", name: "XY", personality: { tone: "cool" } }])
+    expect(result).toHaveLength(0)
+  })
+
+  test("traits filters non-string values", () => {
+    const result = parseCharacters([
+      { id: "x:y", name: "XY", personality: { name: "XY", traits: ["ok", 42, null, "also-ok"] } },
+    ])
+    expect(result[0]!.personality.traits).toEqual(["ok", "also-ok"])
+  })
+})
+
+describe("parsePixelAgentConfig — characters field", () => {
+  test("defaults to empty array", () => {
+    expect(parsePixelAgentConfig(undefined).characters).toEqual([])
+  })
+
+  test("parses characters from raw config", () => {
+    const cfg = parsePixelAgentConfig({
+      characters: [
+        { id: "c:1", name: "One", personality: { name: "One", tone: "calm" } },
+      ],
+    })
+    expect(cfg.characters).toHaveLength(1)
+    expect(cfg.characters[0]!.id).toBe("c:1")
+  })
+})
+
+describe("PixelAgentHost.getAgent", () => {
+  test("returns agent after register", () => {
+    const cfg = parsePixelAgentConfig({ enabled: true })
+    const host = new PixelAgentHost(cfg, new LocalPixelAgentAdapter())
+    host.register({ id: "g:1", name: "G1", character: "spx:companion" })
+    const agent = host.getAgent("g:1")
+    expect(agent?.character).toBe("spx:companion")
+  })
+
+  test("returns undefined for unknown id", () => {
+    const cfg = parsePixelAgentConfig({ enabled: true })
+    const host = new PixelAgentHost(cfg, new LocalPixelAgentAdapter())
+    expect(host.getAgent("nope")).toBeUndefined()
   })
 })
 

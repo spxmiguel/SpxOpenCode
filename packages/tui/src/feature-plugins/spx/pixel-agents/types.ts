@@ -28,11 +28,20 @@ export interface PixelAgentMemory {
   timestamp: number
 }
 
+/** A named character definition — display only, no AI calls. */
+export interface PixelAgentCharacter {
+  id: string
+  name: string
+  personality: PixelAgentPersonality
+}
+
 /** A registered Pixel Agent definition. */
 export interface PixelAgent {
   id: PixelAgentId
   name: string
   personality?: PixelAgentPersonality
+  /** Character id to look up in the character registry. */
+  character?: string
 }
 
 /** Live runtime state tracked by the host per agent per session. */

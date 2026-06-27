@@ -4,6 +4,7 @@ import { parsePixelAgentConfig } from "./pixel-agents/config"
 import { PixelAgentHost } from "./pixel-agents/host"
 import { LocalPixelAgentAdapter } from "./pixel-agents/adapter"
 import type { PixelAgentEvent, PixelAgentEventType } from "./pixel-agents/events"
+import { buildCharacterRegistry, BUILTIN_CHARACTERS } from "./pixel-agents/characters"
 import { setPixelAgentsEnabled, setPixelAgentCount, setPixelRecentEvents, pixelRecentEvents } from "./pixel-agents-store"
 
 const id = "spx:pixel-agents"
@@ -31,6 +32,7 @@ const tui: TuiPlugin = async (api) => {
   const rawConfig = api.kv.get(PIXEL_CONFIG_KEY, {})
   const config = parsePixelAgentConfig(rawConfig)
 
+  const characters = buildCharacterRegistry(config.characters)
   const host = new PixelAgentHost(config, new LocalPixelAgentAdapter())
   pixelHost = host
 
@@ -70,8 +72,22 @@ const tui: TuiPlugin = async (api) => {
             const state = host.getState(agentId)
             const status = state?.active ? "active" : "inactive"
             const eventCount = state?.eventCount ?? 0
-            lines.push(`  • ${agentId}  [${status}]  events: ${eventCount}/${config.maxEventsPerSession}`)
+            const agent = host.getAgent(agentId)
+            const charId = agent?.character
+            const char = charId ? characters.get(charId) : undefined
+            const charLabel = char ? `  char: ${char.name} (${char.personality.tone ?? "—"})` : ""
+            lines.push(`  • ${agentId}  [${status}]  events: ${eventCount}/${config.maxEventsPerSession}${charLabel}`)
           }
+        }
+
+        const allCharIds = [...characters.keys()]
+        lines.push("")
+        lines.push(`Characters (${allCharIds.length}):`)
+        for (const charId of allCharIds) {
+          const c = characters.get(charId)!
+          const traits = c.personality.traits?.join(", ") ?? "—"
+          const tone = c.personality.tone ?? "—"
+          lines.push(`  • ${c.id}  "${c.name}"  tone: ${tone}  traits: [${traits}]`)
         }
         lines.push("")
 

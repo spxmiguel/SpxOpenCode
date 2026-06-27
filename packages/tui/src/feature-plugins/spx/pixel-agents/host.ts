@@ -55,6 +55,10 @@ export class PixelAgentHost {
     return this.states.get(agentId)
   }
 
+  getAgent(agentId: PixelAgentId): PixelAgent | undefined {
+    return this.agents.get(agentId)
+  }
+
   registeredAgentIds(): PixelAgentId[] {
     return [...this.agents.keys()]
   }
