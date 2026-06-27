@@ -28,41 +28,81 @@ SpxOpenCode keeps 100% of OpenCode's behavior and adds carefully scoped DX enhan
 
 ---
 
-## Current Features (v0.1)
+## Current Features (v1.0-RC)
 
 All features are implemented as plugins — zero OpenCode core modifications unless strictly necessary.
 
-| Feature | Keybind | Description |
+### Permission & Safety
+
+| Feature | Keybind / Command | Description |
 |---------|---------|-------------|
-| **SpxStatusBar** | — | Persistent footer bar: accept mode indicator, git branch, provider count |
 | **SpxAutoAccept** | `shift+tab` | Cycle between Manual / Auto / YOLO permission modes |
-| **SpxFallback** | — | Classifies `session.error` events into friendly, actionable notifications |
-| **SpxDoctor** | `/doctor` | Slash command: health check for providers, git, MCP servers, LSP |
+| **Auto allowlist** | — | Per-project `.spx/allowlist.json` patterns for AUTO mode |
+| **YOLO audit log** | — | Session log of auto-approved actions in `.spx/audit/` |
 
 ### Accept Modes
 
 | Mode | Behavior |
 |------|----------|
 | **Manual** | Default OpenCode behavior — prompts on every permission request |
-| **Auto** | Auto-approves all commands with `once` scope (no persistent grants) |
-| **YOLO** | Auto-approves with `always` scope, but **blocks dangerous patterns** (`rm -rf`, `dd if=`, `mkfs`, etc.) |
+| **Auto** | Auto-approves tools matching `.spx/allowlist.json` patterns; others require manual approval |
+| **YOLO** | Auto-approves everything except dangerous patterns (`rm -rf`, `dd if=`, `mkfs`, system paths, etc.) |
+
+### Status & Health
+
+| Feature | Keybind / Command | Description |
+|---------|---------|-------------|
+| **SpxStatusBar** | — | Persistent footer: accept mode, git branch, provider count, last error |
+| **SpxFallback** | — | Classifies `session.error` events into friendly, actionable notifications |
+| **SpxDoctor** | `/doctor` | Health check: providers, git, MCP servers, LSP; per-provider latency |
+
+### Skills
+
+| Feature | Command | Description |
+|---------|---------|-------------|
+| **SpxSkills** | `/skill:commit` | Conventional commit message from staged diff (local git, no AI) |
+| **SpxSkills** | `/skill:pr` | PR description template from git log |
+
+### Session & Memory
+
+| Feature | Command | Description |
+|---------|---------|-------------|
+| **SpxMemory** | `/recall` | Session summary saved to `.spx/memory/` at session end; loaded as context on next session |
+
+### Configuration
+
+| Feature | Command | Description |
+|---------|---------|-------------|
+| **SpxUI** | `/spx` | Shows all SpxOpenCode settings: accept mode, allowlist, skills, plugins, memory |
+
+### Plugin System
+
+| Feature | Description |
+|---------|-------------|
+| **SpxPluginHost** | Loads community `.js` plugins from `.spx/plugins/`; validates `SpxPlugin` shape |
+| **`SpxApi` interface** | Stable subset of `TuiPluginApi` guaranteed for third-party plugins |
+| **`defineSpxPlugin`** | Type-safe helper for community plugin authors |
+
+### macOS Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `cmd+k` | Clear current line |
+| `cmd+p` | Session list |
+| `cmd+n` | New session |
+| `cmd+m` | Toggle sidebar |
+| `cmd+enter` | Submit message |
 
 ---
 
-## Planned Features
+## Planned
 
-See [ROADMAP.md](ROADMAP.md) for full versioned roadmap.
-
-- `v0.2` — Mac Shortcuts (super key support), enhanced status bar metrics
-- `v0.3` — SpxOffice (document-aware context), SpxSkills (reusable slash command library)
-- `v0.5` — SpxAuto virtual provider, SpxCompanions (persistent AI sub-agents)
-- `v1.0` — SpxUI polish, full configuration UI, stable plugin API
+- SpxSkills v2 — community-contributed skill files (contributions welcome)
+- Consider upstreaming SpxStatusBar and SpxFallback to OpenCode
 
 ---
 
 ## Installation
-
-> **Alpha:** SpxOpenCode has no published binaries yet. The scripts below install from source and will automatically switch to binary downloads once releases are available.
 
 ### Quick Install
 
@@ -82,7 +122,9 @@ Both scripts:
 - Create a `spxopencode` command (and `spx` alias) in `~/.spxopencode/bin`
 - Add that directory to your PATH (skip with `--no-modify-path` / `-NoModifyPath`)
 
-**Requirements:** [git](https://git-scm.com). The install scripts handle everything else (including runtime dependencies) automatically.
+**Requirements:** [git](https://git-scm.com) and [bun](https://bun.sh) (>= 1.3.14).
+
+See [docs/installation.md](docs/installation.md) for the full guide including troubleshooting.
 
 ### Update
 
@@ -96,22 +138,11 @@ rm -rf ~/.spxopencode
 
 Then remove the `export PATH=...` line from your shell config.
 
-### Manual / Dev Install
-
-```bash
-git clone https://github.com/spxmiguel/SpxOpenCode.git
-cd SpxOpenCode
-npm install
-npm run dev
-```
-
-> Dev builds require [bun](https://bun.sh) (>= 1.3.14). Install it with `npm install -g bun` or via [brew](https://brew.sh): `brew install bun`.
-
-See [docs/installation.md](docs/installation.md) for the full guide including troubleshooting.
-
 ---
 
-SpxOpenCode features are active by default. To use as vanilla OpenCode, disable spx plugins in your config:
+## Disable individual plugins
+
+SpxOpenCode features are active by default. To disable any plugin, add to your OpenCode config:
 
 ```json
 {
@@ -119,7 +150,11 @@ SpxOpenCode features are active by default. To use as vanilla OpenCode, disable 
     "spx:status-bar": { "enabled": false },
     "spx:auto-accept": { "enabled": false },
     "spx:fallback": { "enabled": false },
-    "spx:doctor": { "enabled": false }
+    "spx:doctor": { "enabled": false },
+    "spx:skills": { "enabled": false },
+    "spx:memory": { "enabled": false },
+    "spx:plugin-host": { "enabled": false },
+    "spx:ui": { "enabled": false }
   }
 }
 ```
@@ -129,32 +164,30 @@ SpxOpenCode features are active by default. To use as vanilla OpenCode, disable 
 ## Development
 
 ```bash
-# Watch mode
-npm run dev
+git clone https://github.com/spxmiguel/SpxOpenCode.git
+cd SpxOpenCode
+bun install
+bun run dev
+```
 
+```bash
 # Type check
-npm run typecheck
+pnpm typecheck
 
-# Run SPX tests
-cd packages/tui && npx bun test
+# Run SPX unit tests
+cd packages/tui && bun test
+
+# Lint (non-blocking)
+pnpm lint
 ```
 
 SpxOpenCode-specific code lives in:
 
 ```
-packages/tui/src/feature-plugins/spx/   # TUI plugins (current)
-spx/                                      # Future modules
-  plugins/     # Plugin definitions
-  core/        # Shared SpxOpenCode core utilities
-  ui/          # UI components
-  doctor/      # Health check logic
-  skills/      # Slash command library
-  office/      # Document context
-  companions/  # Persistent AI sub-agents
-  providers/   # Custom AI providers
-  config/      # SpxOpenCode configuration
-docs/          # Documentation
-assets/        # Static assets
+packages/tui/src/feature-plugins/spx/   # All SPX TUI plugins
+spx/skills/                              # Per-project skill files (user-created)
+docs/                                    # Documentation
+scripts/                                 # Install scripts
 ```
 
 ---
@@ -164,7 +197,7 @@ assets/        # Static assets
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 All new SpxOpenCode functionality must:
-1. Be implemented as a plugin in `packages/tui/src/feature-plugins/spx/` (or future `spx/` modules)
+1. Be implemented as a plugin in `packages/tui/src/feature-plugins/spx/`
 2. Leave OpenCode core behavior intact
 3. Not generate constant AI calls
 4. Be disableable via config

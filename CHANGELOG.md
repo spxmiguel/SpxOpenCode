@@ -11,6 +11,48 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.0.0-rc.1] — 2026-06-27
+
+### Added
+
+- **SpxUI** — `/spx` slash command (alias `/spx-config`) shows a formatted config report: accept mode, allowlist patterns, installed skills, community plugins (loaded/failed), and memory file count.
+- **Stable `SpxApi` type** — `spx-api.ts` exports `SpxApi` (stable subset of `TuiPluginApi`) and `defineSpxPlugin` identity helper for type-safe community plugin authoring.
+- **`SpxPluginHost`** — loads `.spx/plugins/*.js` community plugins at session start via dynamic `import()`; validates shape; captures load errors without crashing host.
+- **`SpxPlugin` / `PluginLoadResult` types** — public interface for community plugins.
+
+### Known limitations (RC)
+
+- `beta` CI workflow (hourly OpenCode upstream sync) stays queued — requires `OPENCODE_APP_SECRET` repo secret; does not affect SpxOpenCode functionality.
+- No compiled binary — runs from source via `bun run`. Binary releases planned post-v1.0.
+- Plugin disable via config key not verified end-to-end (OpenCode plugin manager handles the actual enable/disable).
+- SpxSkills v2 (community-contributed skills) not yet available — contributions welcome.
+- Tested on macOS (arm64, x64) and Linux (x64). Windows support via install script — not CI-tested.
+
+---
+
+## [0.5.0-preview] — 2026-06-27
+
+### Added
+
+- **SpxMemory** — session summaries saved to `.spx/memory/<timestamp>.json` at session end. `/recall` command displays recent summaries. Context loaded automatically on next session in same directory. Zero AI calls during session.
+- **SpxPluginHost** — community plugin loader for `.spx/plugins/*.js`. See `spx-api.ts`.
+- **`SpxApi` stable surface** — `Pick<TuiPluginApi, "attention" | "command" | "event" | "kv" | "slots" | "state" | "keymap" | "client" | "theme"> & { ui: { toast } }`.
+- **`defineSpxPlugin` helper** — identity function for type-safe plugin definition.
+- **Plugin system docs** — `docs/plugin-system.md` covers authoring, shape validation, error handling.
+
+---
+
+## [0.3.0] — 2026-06-26
+
+### Added
+
+- **SpxSkills** — `/skill:commit` generates conventional commit message from staged diff (local `git diff --cached`, no AI). `/skill:pr` generates PR description template from `git log`. Both are zero-AI, zero-network slash commands.
+- **Custom skill loading** — `.md` files in `spx/skills/` auto-register as `/skill:<name>` commands.
+- **Skill generators** — `skill-generators.ts` contains commit and PR template logic.
+- **SpxDoctor v2** — per-provider latency display in health check output; improved MCP status detail.
+
+---
+
 ## [0.1.0-alpha] — 2026-06-26
 
 ### Added
