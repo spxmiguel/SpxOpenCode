@@ -7,6 +7,30 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [1.0.0-rc.3] — 2026-06-27
+
+### Added
+
+- **SpxAuto (FASE 13 — Auto by SpxMiguel)** — availability-aware transparent model router. Zero AI, no network calls, local keyword heuristics only.
+  - `auto-router.ts` — `classify()` (keyword heuristics), `routeWithProviders()` (availability-aware selection), `buildAvailableProviders()` (extracts active models from `api.state.provider`)
+  - `spx-auto.ts` — `/auto <task>` slash command: classifies prompt → selects best available model → `setAutoChosenModel()` → toast showing model / reason / alternatives. Listens to `session.error` for fallback recalculation (excludes failed provider).
+  - `auto-chosen-store.ts` — added `autoLastReason` SolidJS signal tracking last route reason + label
+  - `status-bar.tsx` — `AutoIndicator` upgraded: shows `◈ AUTO ▸ modelID (reason)` instead of static `◈ Auto`
+  - PRIORITY table per route reason (architecture/ui/research/implementation/analysis): ordered preference lists, first available match wins; falls through to any active model if no priority match; falls back to current model if no providers active
+  - Never selects unavailable provider. Every decision is reproducible from local rules. Always announces: model chosen / reason / alternatives.
+  - 10 new `routeWithProviders` unit tests covering availability fallthrough, empty provider list, unknown prompts, partial model availability, and label presence
+
+### Fixed
+
+- **auto-router.ts**: removed hardcoded fake providers (`antigravity`, `codex-mini`, `deepseek`) from ROUTES table — violation of "Nunca escolher modelo indisponível"
+- **spx.test.ts**: updated `route()` tests to match new PRIORITY table (anthropic first for architecture/ui/analysis; google first for research; openai first for implementation)
+
+### Merged
+
+- **PR #39** (davi713albano-coder) — 17 `classify()` edge-case unit tests for `fallback.ts` (`test/classify-edge-cases`). Closes #33.
+
+---
+
 ## [1.0.0-rc.2] — 2026-06-27
 
 ### Added

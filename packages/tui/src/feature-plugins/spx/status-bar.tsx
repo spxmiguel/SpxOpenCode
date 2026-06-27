@@ -3,7 +3,7 @@ import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, createSignal, Show } from "solid-js"
 import { ACCEPT_MODE_KEY, acceptMode, lastError, loopActive, setAcceptMode, type AcceptMode } from "./accept-mode-store"
-import { autoChosenModel } from "./auto-chosen-store"
+import { autoChosenModel, autoLastReason } from "./auto-chosen-store"
 import { lastDoctorOk } from "./doctor"
 import { loadSkillsDir } from "./skill-loader"
 import { useLocal } from "../../context/local"
@@ -84,12 +84,20 @@ function LoopIndicator(props: { api: TuiPluginApi }) {
 
 function AutoIndicator(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
+  const label = createMemo(() => {
+    const m = autoChosenModel()
+    if (!m) return null
+    const r = autoLastReason()
+    return r ? `◈ AUTO ▸ ${m.modelID} (${r.label})` : `◈ AUTO ▸ ${m.modelID}`
+  })
 
   return (
-    <Show when={autoChosenModel() !== null}>
-      <text fg={theme().success} flexShrink={1}>
-        ◈ Auto
-      </text>
+    <Show when={label()}>
+      {(l) => (
+        <text fg={theme().success} flexShrink={1}>
+          {l()}
+        </text>
+      )}
     </Show>
   )
 }

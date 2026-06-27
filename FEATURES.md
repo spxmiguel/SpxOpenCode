@@ -182,6 +182,56 @@ See [docs/auto-by-spxmiguel.md](auto-by-spxmiguel.md) for the built-in model rou
 
 ---
 
+## SpxAuto (Auto by SpxMiguel)
+
+**Plugin ID:** `spx:auto`  
+**File:** `packages/tui/src/feature-plugins/spx/spx-auto.ts`  
+**Command:** `/auto <task description>`
+
+Transparent model router. No AI, no network calls. Local keyword heuristics classify the task, then selects the best available model from configured providers.
+
+**FASE 13 constraints (hard):**
+- Never chooses an unavailable provider
+- Never increases cost
+- Never hides decisions — always shows: model chosen / reason / alternatives
+- Every decision reproducible from local rules only
+
+**How it works:**
+
+1. `/auto <task>` → `classify(prompt)` → `RouteReason`
+2. Walk PRIORITY table for that reason → first provider+model in `api.state.provider` (active) wins
+3. Set `autoChosenModel()` + `autoLastReason()` signals
+4. Toast: `◈ Auto → modelID | Reason: label | Alternatives: ...`
+5. StatusBar shows `◈ AUTO ▸ modelID (reason)` while auto mode active
+6. On `session.error`: recalculate excluding failed provider → announce fallback
+
+**Route reasons and keyword triggers:**
+
+| Reason | Keywords |
+|--------|----------|
+| `architecture` | architect, refactor, design, structure, module, interface, system |
+| `ui` | ui, ux, component, button, form, layout, style, css, animation, visual |
+| `research` | research, explain, how does, what is, compare, understand, why |
+| `implementation` | implement, add, build, create, fix, bug, feature, function |
+| `analysis` | analyze, review, audit, performance, metrics, data, log, trace |
+| `unknown` | (no match) → stays on current model |
+
+**Provider priority order (first available wins):**
+
+| Reason | Priority |
+|--------|----------|
+| architecture | anthropic → google → openai |
+| ui | anthropic → google → openai |
+| research | google → anthropic → openai |
+| implementation | openai → anthropic → google |
+| analysis | anthropic → openai → google |
+
+**Signals:**
+- `autoChosenModel()` — `{ providerID, modelID } | null`
+- `autoLastReason()` — `{ reason, label } | null`
+
+---
+
 ## SpxMemory
 
 **Plugin ID:** `spx:memory`  
@@ -299,6 +349,7 @@ Each plugin can be disabled without uninstalling the fork. Edit `packages/tui/sr
 { ...SpxMemory,       enabled: false },
 { ...SpxPluginHost,   enabled: false },
 { ...SpxUi,           enabled: false },
+{ ...SpxAuto,         enabled: false },
 ```
 
 The `BuiltinTuiPlugin` type:
@@ -325,6 +376,7 @@ After editing, rebuild: `bun run build`
 | `SpxMemory` | `spx:memory` | Session summary save/load |
 | `SpxPluginHost` | `spx:plugin-host` | Community plugin loader (`.spx/plugins/*.js`) |
 | `SpxUi` | `spx:ui` | `/spx` config panel |
+| `SpxAuto` | `spx:auto` | `/auto` availability-aware model router (Auto by SpxMiguel) |
 
 ---
 
