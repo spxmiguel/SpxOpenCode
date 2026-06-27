@@ -45,18 +45,30 @@ Goal: reusable slash commands for common dev tasks. All static, zero AI calls.
 Goal: make SpxOpenCode aware of what happened in past sessions.
 
 - [x] **SpxMemory** — session summary to `.spx/memory/` at session end. Loaded as context on next session in same directory. Zero AI calls during session — only on explicit `:recall` command.
-- [ ] **SpxSkills v2** — more skills contributed by community
+- 🔜 **SpxSkills v2** — more skills contributed by community (no contributions yet; open for PRs)
 
 ---
 
-## v1.0 — Stable
+## v1.0-RC — Release Candidate 🟡
 
-Goal: stable plugin API, ready for long-term maintenance and community contributions.
+Current state: [v1.0.0-rc.1](https://github.com/spxmiguel/SpxOpenCode/releases/tag/v1.0.0-rc.1) released 2026-06-27. Not production stable.
 
-- [x] **Stable plugin API** — documented `SpxPlugin` interface for third-party plugins
-- [x] **Full upstream compatibility** — structured process for pulling OpenCode upstream changes
-- [x] **SpxUI** — `/spx config` TUI panel showing all SpxOpenCode settings
+- [x] **Stable plugin API** — documented `SpxPlugin` interface and `defineSpxPlugin` helper
+- [x] **Full upstream compatibility** — structured process for pulling OpenCode upstream changes; `scripts/upstream-sync.sh`
+- [x] **SpxUI** — `/spx` TUI panel showing all SpxOpenCode settings
+- [x] **Plugin disable support** — `BuiltinTuiPlugin.enabled?: boolean` documented
+- 🟡 **Windows CI coverage** — install script exists; not CI-tested
+- 🟡 **Upstream sync CI validation** — `beta.yml` exists; requires `OPENCODE_APP_SECRET` repo secret
+- 🔜 **Binary releases** — macOS/Linux/Windows compiled binaries; runs from source only currently
 - [ ] Consider upstreaming `SpxStatusBar` and `SpxFallback` to OpenCode
+
+### v1.0 final (post-RC)
+
+Before v1.0 final:
+1. Binary release pipeline (GitHub Actions, `bun compile`)
+2. End-to-end integration test for YOLO approve/reject flow (Issue #8)
+3. Windows CI coverage
+4. Community feedback on `SpxApi` surface (break window closes at v1.0 final)
 
 ---
 
@@ -70,4 +82,6 @@ Features explicitly excluded to preserve philosophy:
 - GUI or web interface
 - Cloud sync or telemetry of any kind
 - Provider routing or selection logic (OpenCode handles this)
-- AI companion features that run without explicit user request
+- AI companion features that run without explicit user request ("Tamagotchi"-style companions)
+- Office Mode / document-aware context injection
+- Pixel Agents

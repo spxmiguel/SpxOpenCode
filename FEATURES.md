@@ -282,6 +282,52 @@ export default defineSpxPlugin({
 
 ---
 
+## Disabling plugins
+
+Each plugin can be disabled without uninstalling the fork. Edit `packages/tui/src/feature-plugins/builtins.ts`:
+
+```ts
+// disable a single plugin
+{ ...SpxStatusBar, enabled: false },
+
+// disable all spx plugins (vanilla OpenCode behavior)
+{ ...SpxStatusBar,    enabled: false },
+{ ...SpxAutoAccept,   enabled: false },
+{ ...SpxFallback,     enabled: false },
+{ ...SpxDoctor,       enabled: false },
+{ ...SpxSkills,       enabled: false },
+{ ...SpxMemory,       enabled: false },
+{ ...SpxPluginHost,   enabled: false },
+{ ...SpxUi,           enabled: false },
+```
+
+The `BuiltinTuiPlugin` type:
+
+```ts
+export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
+  id: string
+  tui: TuiPlugin
+  enabled?: boolean  // set to false to disable
+}
+```
+
+The `enabled` field is checked by `packages/tui/src/feature-plugins/system/plugins.tsx` at startup. A plugin with `enabled: false` is skipped entirely — no registration, no event listeners, no slot rendering.
+
+After editing, rebuild: `bun run build`
+
+| Import | Plugin ID | Description |
+|--------|-----------|-------------|
+| `SpxStatusBar` | `spx:status-bar` | Persistent footer bar (accept mode, git branch, providers) |
+| `SpxAutoAccept` | `spx:auto-accept` | `shift+tab` accept-mode cycling |
+| `SpxFallback` | `spx:fallback` | Friendly error notifications |
+| `SpxDoctor` | `spx:doctor` | `/doctor` health-check slash command |
+| `SpxSkills` | `spx:skills` | `/skill:commit` and `/skill:pr` slash commands |
+| `SpxMemory` | `spx:memory` | Session summary save/load |
+| `SpxPluginHost` | `spx:plugin-host` | Community plugin loader (`.spx/plugins/*.js`) |
+| `SpxUi` | `spx:ui` | `/spx` config panel |
+
+---
+
 ## Not implemented
 
 Features explicitly excluded from SpxOpenCode:

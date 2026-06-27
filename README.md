@@ -142,22 +142,35 @@ Then remove the `export PATH=...` line from your shell config.
 
 ## Disable individual plugins
 
-SpxOpenCode features are active by default. To disable any plugin, add to your OpenCode config:
+SpxOpenCode features are active by default. To disable any plugin, edit `packages/tui/src/feature-plugins/builtins.ts` and set `enabled: false` on the plugin entry:
 
-```json
-{
-  "plugins": {
-    "spx:status-bar": { "enabled": false },
-    "spx:auto-accept": { "enabled": false },
-    "spx:fallback": { "enabled": false },
-    "spx:doctor": { "enabled": false },
-    "spx:skills": { "enabled": false },
-    "spx:memory": { "enabled": false },
-    "spx:plugin-host": { "enabled": false },
-    "spx:ui": { "enabled": false }
-  }
-}
+```ts
+// disable a single plugin
+{ ...SpxStatusBar, enabled: false },
+
+// disable all spx plugins (returns vanilla OpenCode behavior)
+{ ...SpxStatusBar,    enabled: false },
+{ ...SpxAutoAccept,   enabled: false },
+{ ...SpxFallback,     enabled: false },
+{ ...SpxDoctor,       enabled: false },
+{ ...SpxSkills,       enabled: false },
+{ ...SpxMemory,       enabled: false },
+{ ...SpxPluginHost,   enabled: false },
+{ ...SpxUi,           enabled: false },
 ```
+
+After editing, rebuild: `bun run build` (or `bun run dev` to run immediately).
+
+| Import | Plugin ID | Description |
+|--------|-----------|-------------|
+| `SpxStatusBar` | `spx:status-bar` | Persistent footer bar (accept mode, git branch, providers) |
+| `SpxAutoAccept` | `spx:auto-accept` | `shift+tab` accept-mode cycling |
+| `SpxFallback` | `spx:fallback` | Friendly error notifications |
+| `SpxDoctor` | `spx:doctor` | `/doctor` health-check slash command |
+| `SpxSkills` | `spx:skills` | `/skill:commit` and `/skill:pr` slash commands |
+| `SpxMemory` | `spx:memory` | Session summary save/load |
+| `SpxPluginHost` | `spx:plugin-host` | Community plugin loader |
+| `SpxUi` | `spx:ui` | `/spx` config panel |
 
 ---
 
