@@ -1,6 +1,6 @@
 import type { TuiPlugin, TuiDialogStack } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
-import { generateCommitMessage, generatePrDescription, copyToClipboard } from "./skill-generators"
+import { generateCommitMessage, generatePrDescription, generateChangelog, copyToClipboard } from "./skill-generators"
 
 const id = "spx:skills"
 
@@ -19,6 +19,23 @@ const tui: TuiPlugin = async (api) => {
         await api.attention.notify({
           title: copied ? "Commit Message (copied to clipboard)" : "Commit Message",
           message,
+          notification: { when: "always" },
+        })
+      },
+    },
+    {
+      title: "Skill: Generate Changelog",
+      value: "spx.skill.changelog",
+      description: "Generate CHANGELOG entry from git log since last tag (conventional commits)",
+      category: "SpxOpenCode",
+      slash: { name: "skill:changelog", aliases: ["changelog"] },
+      async onSelect(_dialog?: TuiDialogStack) {
+        const dir = api.state.path.directory
+        const entry = generateChangelog(dir)
+        const copied = copyToClipboard(entry)
+        await api.attention.notify({
+          title: copied ? "Changelog Entry (copied to clipboard)" : "Changelog Entry",
+          message: entry,
           notification: { when: "always" },
         })
       },

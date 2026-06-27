@@ -81,6 +81,78 @@ export function generatePrDescription(dir: string): string {
   ].join("\n")
 }
 
+const COMMIT_TYPE_LABELS: Record<string, string> = {
+  feat: "Features",
+  fix: "Bug Fixes",
+  perf: "Performance",
+  refactor: "Refactoring",
+  docs: "Documentation",
+  test: "Tests",
+  chore: "Chores",
+  ci: "CI/CD",
+  build: "Build",
+}
+
+const TYPE_ORDER = ["feat", "fix", "perf", "refactor", "docs", "test", "chore", "ci", "build"]
+
+export function generateChangelog(dir: string): string {
+  const lastTag = run("git describe --tags --abbrev=0 2>/dev/null", dir)
+  const range = lastTag ? `${lastTag}..HEAD` : "HEAD"
+  const rawLog = run(`git log ${range} --pretty=format:"%s"`, dir)
+
+  if (!rawLog) {
+    return lastTag
+      ? `No commits since ${lastTag}.`
+      : "No commits found. Is this a git repository?"
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const header = `## [Unreleased] — ${today}`
+
+  const lines = rawLog.split("\n").filter(Boolean)
+  const breaking: string[] = []
+  const grouped: Record<string, string[]> = {}
+
+  for (const line of lines) {
+    const match = line.match(/^(\w+)(?:\(([^)]+)\))?(!)?:\s+(.+)$/)
+    if (!match) {
+      ;(grouped["other"] ??= []).push(line)
+      continue
+    }
+    const [, type, scope, bang, subject] = match
+    const entry = scope ? `${scope}: ${subject}` : subject
+    if (bang || line.toLowerCase().includes("breaking change")) {
+      breaking.push(`${type}(${scope ?? "*"}): ${subject}`)
+    } else {
+      ;(grouped[type] ??= []).push(entry)
+    }
+  }
+
+  const sections: string[] = [header, ""]
+
+  if (breaking.length > 0) {
+    sections.push("### Breaking Changes")
+    breaking.forEach((l) => sections.push(`- ${l}`))
+    sections.push("")
+  }
+
+  for (const type of TYPE_ORDER) {
+    const entries = grouped[type]
+    if (!entries || entries.length === 0) continue
+    sections.push(`### ${COMMIT_TYPE_LABELS[type] ?? type}`)
+    entries.forEach((e) => sections.push(`- ${e}`))
+    sections.push("")
+  }
+
+  if (grouped["other"] && grouped["other"].length > 0) {
+    sections.push("### Other")
+    grouped["other"].forEach((e) => sections.push(`- ${e}`))
+    sections.push("")
+  }
+
+  return sections.join("\n").trimEnd()
+}
+
 export function copyToClipboard(text: string): boolean {
   try {
     if (process.platform === "darwin") {
