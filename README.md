@@ -2,6 +2,8 @@
 
 > An opinionated fork of [OpenCode](https://github.com/anomalyco/opencode) — productivity first, compatibility always.
 
+> **Alpha / pre-release.** Current release is `v1.0.0-rc.1`. Not production-stable. Breaking changes may occur before v1.0 final.
+
 SpxOpenCode keeps 100% of OpenCode's behavior and adds carefully scoped DX enhancements as non-invasive plugins. You can use it as pure OpenCode today and opt into SpxOpenCode features at any time.
 
 ---
