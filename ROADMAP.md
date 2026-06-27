@@ -40,11 +40,11 @@ Goal: reusable slash commands for common dev tasks. All static, zero AI calls.
 
 ---
 
-## v0.5-preview — Session Awareness
+## v0.5-preview — Session Awareness ✅
 
 Goal: make SpxOpenCode aware of what happened in past sessions.
 
-- [ ] **SpxMemory** — session summary to `.spx/memory/` at session end. Loaded as context on next session in same directory. Zero AI calls during session — only on explicit `:recall` command.
+- [x] **SpxMemory** — session summary to `.spx/memory/` at session end. Loaded as context on next session in same directory. Zero AI calls during session — only on explicit `:recall` command.
 - [ ] **SpxSkills v2** — more skills contributed by community
 
 ---
