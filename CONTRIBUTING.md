@@ -33,6 +33,7 @@ bun run dev
 |------|----------|
 | TUI plugin | `packages/tui/src/feature-plugins/spx/<name>.ts` |
 | Shared state | `packages/tui/src/feature-plugins/spx/<name>-store.ts` |
+| Pixel Agents | `packages/tui/src/feature-plugins/spx/pixel-agents/` |
 | Future modules | `spx/<subsystem>/` |
 | Documentation | `docs/` |
 
