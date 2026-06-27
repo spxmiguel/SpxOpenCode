@@ -44,6 +44,7 @@ export function DialogModel(props: { providerID?: string }) {
             value: { providerID: provider.id, modelID: model.id },
             title: model.name ?? item.modelID,
             description: provider.name,
+            details: modelCapabilityDetails(model),
             category,
             disabled: provider.id === "opencode" && model.id.includes("-nano"),
             footer: model.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
@@ -82,6 +83,7 @@ export function DialogModel(props: { providerID?: string }) {
             description: favorites.some((item) => item.providerID === provider.id && item.modelID === model)
               ? "(Favorite)"
               : undefined,
+            details: modelCapabilityDetails(info),
             category: connected() ? provider.name : undefined,
             disabled: provider.id === "opencode" && model.includes("-nano"),
             footer: info.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
@@ -241,6 +243,26 @@ export function DialogModel(props: { providerID?: string }) {
       current={local.model.current()}
     />
   )
+}
+
+function modelCapabilityDetails(info: {
+  capabilities?: {
+    reasoning?: boolean
+    attachment?: boolean
+    toolcall?: boolean
+    input?: { image?: boolean; pdf?: boolean }
+  }
+  limit?: { context?: number }
+}): string[] | undefined {
+  const badges: string[] = []
+  if (info.capabilities?.reasoning) badges.push("reasoning")
+  if (info.capabilities?.input?.image) badges.push("vision")
+  if (info.capabilities?.attachment) badges.push("files")
+  if (info.limit?.context) {
+    const k = Math.round(info.limit.context / 1000)
+    badges.push(`${k}K ctx`)
+  }
+  return badges.length > 0 ? [badges.join(" · ")] : undefined
 }
 
 export function sortModelOptions<T extends { footer?: string; releaseDate: string | number; title: string }>(
