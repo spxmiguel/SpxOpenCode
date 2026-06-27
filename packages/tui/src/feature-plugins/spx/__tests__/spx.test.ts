@@ -148,6 +148,104 @@ describe("classify", () => {
   test("returns undefined for null", () => {
     expect(classify(null)).toBeUndefined()
   })
+
+  test("empty string message returns undefined", () => {
+    expect(classify({ message: "" })).toBeUndefined()
+  })
+
+  test("empty object returns undefined", () => {
+    expect(classify({})).toBeUndefined()
+  })
+
+  test("classifies ECONNRESET as provider timeout", () => {
+    const result = classify({ name: "ProviderHeaderTimeoutError", message: "ECONNRESET" })
+    expect(result?.title).toBe("Provider timeout")
+  })
+
+  test("classifies ETIMEDOUT as provider timeout", () => {
+    const result = classify({ name: "ProviderHeaderTimeoutError", message: "ETIMEDOUT" })
+    expect(result?.title).toBe("Provider timeout")
+  })
+
+  test("classifies rate limit via message text", () => {
+    const result = classify({ message: "rate limit exceeded" })
+    expect(result?.title).toBe("Rate limited")
+  })
+
+  test("classifies rate limit via responseBody", () => {
+    const result = classify({ responseBody: "rate_limit_exceeded" })
+    expect(result?.title).toBe("Rate limited")
+  })
+
+  test("classifies 401 as auth error", () => {
+    const result = classify({ statusCode: 401 })
+    expect(result?.title).toBe("Auth error")
+  })
+
+  test("classifies unauthorized message as auth error", () => {
+    const result = classify({ message: "unauthorized access" })
+    expect(result?.title).toBe("Auth error")
+  })
+
+  test("classifies invalid api key message as auth error", () => {
+    const result = classify({ message: "invalid api key provided" })
+    expect(result?.title).toBe("Auth error")
+  })
+
+  test("classifies 403 as access denied", () => {
+    const result = classify({ statusCode: 403 })
+    expect(result?.title).toBe("Access denied")
+  })
+
+  test("classifies forbidden message as access denied", () => {
+    const result = classify({ message: "forbidden resource" })
+    expect(result?.title).toBe("Access denied")
+  })
+
+  test("classifies 413 as context overflow", () => {
+    const result = classify({ statusCode: 413 })
+    expect(result?.title).toBe("Context overflow")
+  })
+
+  test("classifies context_length_exceeded in body as context overflow", () => {
+    const result = classify({ responseBody: "context_length_exceeded" })
+    expect(result?.title).toBe("Context overflow")
+  })
+
+  test("classifies context keyword in message as context overflow", () => {
+    const result = classify({ message: "context too long" })
+    expect(result?.title).toBe("Context overflow")
+  })
+
+  test("classifies ProviderResponseStreamError as stream interrupted", () => {
+    const result = classify({ name: "ProviderResponseStreamError" })
+    expect(result?.title).toBe("Stream interrupted")
+  })
+
+  test("classifies server_is_overloaded in body", () => {
+    const result = classify({ responseBody: "server_is_overloaded" })
+    expect(result?.title).toBe("Provider overloaded")
+  })
+
+  test("classifies server_error in body", () => {
+    const result = classify({ responseBody: "server_error" })
+    expect(result?.title).toBe("Provider overloaded")
+  })
+
+  test("classifies insufficient_quota in body", () => {
+    const result = classify({ responseBody: "insufficient_quota" })
+    expect(result?.title).toBe("Quota exceeded")
+  })
+
+  test("classifies quota in message", () => {
+    const result = classify({ message: "quota exceeded" })
+    expect(result?.title).toBe("Quota exceeded")
+  })
+
+  test("classifies usage_not_included in body as plan restriction", () => {
+    const result = classify({ responseBody: "usage_not_included" })
+    expect(result?.title).toBe("Plan restriction")
+  })
 })
 
 // ---------------------------------------------------------------------------
