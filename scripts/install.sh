@@ -64,7 +64,12 @@ echo -e ""
 if ! command -v bun >/dev/null 2>&1; then
     echo -e "${ORANGE}bun not found — installing...${NC}"
     if [[ "$(uname)" == "Darwin" ]] && command -v brew >/dev/null 2>&1; then
-        brew install oven-sh/bun/bun
+        brew install oven-sh/bun/bun 2>/dev/null || {
+            echo -e "${ORANGE}brew install failed (CLT outdated?) — falling back to bun.sh installer...${NC}"
+            curl -fsSL https://bun.sh/install | bash
+            export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+        }
     else
         curl -fsSL https://bun.sh/install | bash
         export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
