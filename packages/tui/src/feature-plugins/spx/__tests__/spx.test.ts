@@ -8,7 +8,8 @@ import { acceptMode, setAcceptMode, lastError, reportError } from "../accept-mod
 import type { AcceptMode } from "../accept-mode-store"
 import { parseSkill, loadSkillsDir } from "../skill-loader"
 import { checkSkillsHealth } from "../doctor"
-import { route } from "../auto-router"
+import { route, routeWithProviders, classify as autoClassify } from "../auto-router"
+import type { AvailableProvider } from "../auto-router"
 import { classifyRisk, overallRisk } from "../diff-risk"
 
 // ---------------------------------------------------------------------------
@@ -17,34 +18,34 @@ import { classifyRisk, overallRisk } from "../diff-risk"
 
 const FALLBACK = { providerID: "current", modelID: "current-model" }
 
-describe("route", () => {
-  test("architecture keywords → anthropic", () => {
+describe("route (legacy wrapper — uses PRIORITY[0])", () => {
+  test("architecture keywords → anthropic (priority[0])", () => {
     const result = route("refactor the auth module", FALLBACK)
     expect(result.providerID).toBe("anthropic")
     expect(result.reason).toBe("architecture")
   })
 
-  test("ui keywords → antigravity", () => {
+  test("ui keywords → anthropic (priority[0] for ui)", () => {
     const result = route("build a form component with nice layout", FALLBACK)
-    expect(result.providerID).toBe("antigravity")
+    expect(result.providerID).toBe("anthropic")
     expect(result.reason).toBe("ui")
   })
 
-  test("research keywords → google", () => {
+  test("research keywords → google (priority[0] for research)", () => {
     const result = route("explain how does the event loop work", FALLBACK)
     expect(result.providerID).toBe("google")
     expect(result.reason).toBe("research")
   })
 
-  test("implementation keywords → openai", () => {
+  test("implementation keywords → openai (priority[0] for implementation)", () => {
     const result = route("implement a new feature for user login", FALLBACK)
     expect(result.providerID).toBe("openai")
     expect(result.reason).toBe("implementation")
   })
 
-  test("analysis keywords → deepseek", () => {
+  test("analysis keywords → anthropic (priority[0] for analysis)", () => {
     const result = route("analyze performance metrics and trace bottlenecks", FALLBACK)
-    expect(result.providerID).toBe("deepseek")
+    expect(result.providerID).toBe("anthropic")
     expect(result.reason).toBe("analysis")
   })
 
@@ -59,6 +60,88 @@ describe("route", () => {
     const result = route("", FALLBACK)
     expect(result.reason).toBe("unknown")
     expect(result.providerID).toBe(FALLBACK.providerID)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// routeWithProviders — availability-aware routing (FASE 13)
+// ---------------------------------------------------------------------------
+
+const MOCK_ANTHROPIC: AvailableProvider = {
+  providerID: "anthropic",
+  modelIDs: ["claude-sonnet-4-6", "claude-haiku-4-5"],
+}
+const MOCK_GOOGLE: AvailableProvider = {
+  providerID: "google",
+  modelIDs: ["gemini-2.5-pro", "gemini-2.0-flash"],
+}
+const MOCK_OPENAI: AvailableProvider = {
+  providerID: "openai",
+  modelIDs: ["gpt-4o"],
+}
+const ALL_PROVIDERS = [MOCK_ANTHROPIC, MOCK_GOOGLE, MOCK_OPENAI]
+
+describe("routeWithProviders", () => {
+  test("architecture → anthropic when available", () => {
+    const r = routeWithProviders("refactor the auth module", ALL_PROVIDERS, FALLBACK)
+    expect(r.providerID).toBe("anthropic")
+    expect(r.reason).toBe("architecture")
+  })
+
+  test("research → google/gemini-2.5-pro (priority[0] available)", () => {
+    const r = routeWithProviders("explain how does the event loop work", ALL_PROVIDERS, FALLBACK)
+    expect(r.providerID).toBe("google")
+    expect(r.modelID).toBe("gemini-2.5-pro")
+    expect(r.reason).toBe("research")
+  })
+
+  test("implementation → openai/gpt-4o (priority[0] available)", () => {
+    const r = routeWithProviders("implement a new feature", ALL_PROVIDERS, FALLBACK)
+    expect(r.providerID).toBe("openai")
+    expect(r.reason).toBe("implementation")
+  })
+
+  test("falls through to next priority when first unavailable", () => {
+    // anthropic unavailable → should pick google for research
+    const r = routeWithProviders("explain how does the event loop work", [MOCK_GOOGLE, MOCK_OPENAI], FALLBACK)
+    expect(r.providerID).toBe("google")
+  })
+
+  test("falls through entire priority list → picks any available provider", () => {
+    // Only openai available; architecture priority is anthropic → google → openai
+    const r = routeWithProviders("refactor the system design", [MOCK_OPENAI], FALLBACK)
+    expect(r.providerID).toBe("openai")
+    expect(r.reason).toBe("architecture")
+  })
+
+  test("empty available list → returns fallback", () => {
+    const r = routeWithProviders("refactor the auth module", [], FALLBACK)
+    expect(r.providerID).toBe(FALLBACK.providerID)
+    expect(r.modelID).toBe(FALLBACK.modelID)
+  })
+
+  test("unknown prompt → returns fallback regardless of available", () => {
+    const r = routeWithProviders("hello there", ALL_PROVIDERS, FALLBACK)
+    expect(r.reason).toBe("unknown")
+    expect(r.providerID).toBe(FALLBACK.providerID)
+  })
+
+  test("model not in provider modelIDs → skips to next priority", () => {
+    // anthropic has only claude-haiku-4-5, not claude-opus-4-8 or claude-sonnet-4-6
+    const limitedAnthropicOnly: AvailableProvider = {
+      providerID: "anthropic",
+      modelIDs: ["claude-haiku-4-5"],
+    }
+    const r = routeWithProviders("refactor the auth module", [limitedAnthropicOnly], FALLBACK)
+    // claude-haiku-4-5 is in architecture priority list
+    expect(r.providerID).toBe("anthropic")
+    expect(r.modelID).toBe("claude-haiku-4-5")
+  })
+
+  test("result always has label string", () => {
+    const r = routeWithProviders("analyze performance metrics", ALL_PROVIDERS, FALLBACK)
+    expect(typeof r.label).toBe("string")
+    expect(r.label.length).toBeGreaterThan(0)
   })
 })
 
