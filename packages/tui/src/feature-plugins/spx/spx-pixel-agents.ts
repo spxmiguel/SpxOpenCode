@@ -2,7 +2,7 @@ import type { TuiPlugin } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { parsePixelAgentConfig } from "./pixel-agents/config"
 import { PixelAgentHost } from "./pixel-agents/host"
-import { LocalPixelAgentAdapter } from "./pixel-agents/adapter"
+import { LocalPixelAgentAdapter, GroqPixelAgentAdapter } from "./pixel-agents/adapter"
 import type { PixelAgentEvent, PixelAgentEventType } from "./pixel-agents/events"
 import { buildCharacterRegistry, BUILTIN_CHARACTERS } from "./pixel-agents/characters"
 import { setPixelAgentsEnabled, setPixelAgentCount, setPixelRecentEvents, pixelRecentEvents } from "./pixel-agents-store"
@@ -33,7 +33,10 @@ const tui: TuiPlugin = async (api) => {
   const config = parsePixelAgentConfig(rawConfig)
 
   const characters = buildCharacterRegistry(config.characters)
-  const host = new PixelAgentHost(config, new LocalPixelAgentAdapter())
+  const adapter = config.groqEnabled && config.groqApiKey
+    ? new GroqPixelAgentAdapter()
+    : new LocalPixelAgentAdapter()
+  const host = new PixelAgentHost(config, adapter)
   pixelHost = host
 
   setPixelAgentsEnabled(config.enabled)
@@ -48,6 +51,30 @@ const tui: TuiPlugin = async (api) => {
       setPixelAgentCount(host.registeredAgentIds().length)
     })
   }
+
+  // Wire OpenCode lifecycle events → PixelAgentHost
+  const unsubs = [
+    api.event.on("session.created", () =>
+      host.receive({ type: "session.started", timestamp: Date.now() }),
+    ),
+    api.event.on("session.deleted", () =>
+      host.receive({ type: "session.finished", timestamp: Date.now() }),
+    ),
+    api.event.on("session.status", (e) => {
+      const t = e.properties.status.type
+      if (t === "busy") host.receive({ type: "loop.started", timestamp: Date.now() })
+      else if (t === "idle") host.receive({ type: "loop.finished", timestamp: Date.now() })
+    }),
+    api.event.on("session.idle", () =>
+      host.receive({ type: "loop.finished", timestamp: Date.now() }),
+    ),
+  ]
+
+  api.lifecycle.onDispose(() => {
+    for (const unsub of unsubs) unsub()
+    host.dispose()
+    pixelHost = null
+  })
 
   api.command!.register(() => [
     {
