@@ -1,4 +1,5 @@
 import { createMemo, createSignal } from "solid-js"
+import { useTheme } from "../context/theme"
 import { useLocal } from "../context/local"
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect } from "../ui/dialog-select"
@@ -18,6 +19,7 @@ export function DialogModel(props: { providerID?: string }) {
   const sync = useSync()
   const dialog = useDialog()
   const toast = useToast()
+  const { theme } = useTheme()
   const [query, setQuery] = createSignal("")
 
   const connected = useConnected()
@@ -157,7 +159,7 @@ export function DialogModel(props: { providerID?: string }) {
             async onSelect() {
               const taskDesc = await DialogPrompt.show(dialog, "Auto by SpxMiguel", {
                 placeholder: "Describe your task (e.g. refactor auth module)",
-                description: () => "Auto picks the best model based on keywords in your description.",
+                description: () => <text fg={theme.textMuted}>Auto picks the best model based on keywords in your description.</text>,
               })
               if (taskDesc === null) return
               const current = local.model.current()
