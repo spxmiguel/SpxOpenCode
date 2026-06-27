@@ -55,7 +55,7 @@ Goal: stable plugin API, ready for long-term maintenance and community contribut
 
 - [x] **Stable plugin API** — documented `SpxPlugin` interface for third-party plugins
 - [x] **Full upstream compatibility** — structured process for pulling OpenCode upstream changes
-- [ ] **SpxUI** — `/spx config` TUI panel showing all SpxOpenCode settings
+- [x] **SpxUI** — `/spx config` TUI panel showing all SpxOpenCode settings
 - [ ] Consider upstreaming `SpxStatusBar` and `SpxFallback` to OpenCode
 
 ---
