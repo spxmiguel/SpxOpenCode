@@ -9,6 +9,24 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- **Pixel Agents Foundation** — infrastructure layer for lightweight event-reactive agents. Disabled by default (`enabled: false`). Zero AI calls in LOCAL mode. Ships as pure TypeScript with no new runtime dependencies.
+  - `types.ts` — `PixelAgent`, `PixelAgentEvent`, `PixelAgentState`, `PixelAgentAction`, `PixelAgentMemory`, `PixelAgentRuntime`, `PixelAgentProviderMode`
+  - `config.ts` — `parsePixelAgentConfig()` with safe defaults; premium mode requires explicit `premiumAllowed: true`
+  - `events.ts` — `PixelAgentEventBus` with 11 typed event types; in-process pub/sub, no external dependencies
+  - `adapter.ts` — `PixelAgentAdapter` interface + `LocalPixelAgentAdapter` (deterministic, zero AI)
+  - `persistence.ts` — `PixelAgentMemoryStore` interface + `InMemoryPixelAgentMemoryStore` (RAM only, no file I/O)
+  - `host.ts` — `PixelAgentHost`: registers agents, routes events to adapter, enforces `maxEventsPerSession`, emits `quota.exceeded`
+  - 25+ tests covering all modules (`pixel-agents.test.ts`)
+  - Docs: `docs/pixel-agents.md`, `docs/pixel-events.md`, `docs/pixel-api.md`, `docs/pixel-agents-analysis.md`
+
+### Known limitations
+
+- Pixel Agents are not wired into the SpxPlugin lifecycle — `host.receive()` is not called by any running plugin yet.
+- No UI: no StatusBar indicator, no `:pixel` TUI panel.
+- `"groq"` and `"premium"` provider modes are typed but have no adapter implementation.
+
 ---
 
 ## [1.0.0-rc.1] — 2026-06-27

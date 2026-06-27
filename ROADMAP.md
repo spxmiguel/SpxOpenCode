@@ -72,6 +72,36 @@ Before v1.0 final:
 
 ---
 
+## Pixel Agents — Foundation 🟡 (PARTIAL)
+
+Lightweight, stateful event observers. Disabled by default, zero AI calls in LOCAL mode.
+
+**Status**: Infrastructure only. Not wired to plugin lifecycle or UI yet.
+
+- [x] **Types** — `PixelAgent`, `PixelAgentEvent`, `PixelAgentState`, `PixelAgentAction`, `PixelAgentMemory`, `PixelAgentRuntime`, `PixelAgentProviderMode`
+- [x] **Config parser** — safe defaults, premium mode enforcement, `maxEventsPerSession` cap
+- [x] **Event bus** — 11 typed event types, in-process pub/sub
+- [x] **`LocalPixelAgentAdapter`** — deterministic reactions, zero AI calls
+- [x] **`InMemoryPixelAgentMemoryStore`** — RAM-only, no file I/O, no SQLite
+- [x] **`PixelAgentHost`** — register agents, route events, enforce quota, pub/sub API
+- [x] Tests — 25+ assertions covering config, event bus, adapter, persistence, host
+- [x] Docs — `docs/pixel-agents.md`, `docs/pixel-events.md`, `docs/pixel-api.md`, `docs/pixel-agents-analysis.md`
+
+**What is explicitly NOT included** (and will not be, without a new explicit authorization):
+- Plugin wiring (host not connected to SpxPlugin lifecycle)
+- UI panel (no `:pixel` TUI screen, no StatusBar indicator)
+- Groq adapter (mode typed but no implementation)
+- AI calls of any kind in this phase
+- Personalities, characters, Tamagotchis, XP/humor systems
+
+### Planned (future, not authorized)
+
+- **Pixel Agents UI** — StatusBar indicator; `:pixel` TUI panel
+- **Tamagotchi System** — personality-driven idle state (requires UI + local state machine)
+- **Groq Personality Mode** — optional Groq adapter behind `groqEnabled: true` + API key
+
+---
+
 ## Not on the roadmap
 
 Features explicitly excluded to preserve philosophy:
@@ -82,6 +112,5 @@ Features explicitly excluded to preserve philosophy:
 - GUI or web interface
 - Cloud sync or telemetry of any kind
 - Provider routing or selection logic (OpenCode handles this)
-- AI companion features that run without explicit user request ("Tamagotchi"-style companions)
+- AI companion features that run without explicit user request ("Tamagotchi"-style companions, full personalities)
 - Office Mode / document-aware context injection
-- Pixel Agents
