@@ -6,6 +6,7 @@ import { ACCEPT_MODE_KEY, acceptMode, lastError, loopActive, setAcceptMode, type
 import { autoChosenModel, autoLastReason } from "./auto-chosen-store"
 import { lastDoctorOk } from "./doctor"
 import { loadSkillsDir } from "./skill-loader"
+import { pixelAgentsEnabled, pixelAgentCount } from "./pixel-agents-store"
 import { useLocal } from "../../context/local"
 
 const id = "spx:status-bar"
@@ -115,6 +116,18 @@ function DoctorIndicator(props: { api: TuiPluginApi }) {
   )
 }
 
+function PixelAgentIndicator(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+
+  return (
+    <Show when={pixelAgentsEnabled() && pixelAgentCount() > 0}>
+      <text fg={theme().textMuted} flexShrink={1}>
+        {`[🤖 ${pixelAgentCount()}]`}
+      </text>
+    </Show>
+  )
+}
+
 function SkillsCountIndicator(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
 
@@ -178,6 +191,7 @@ function View(props: { api: TuiPluginApi }) {
       <LoopIndicator api={props.api} />
       <AutoIndicator api={props.api} />
       <DoctorIndicator api={props.api} />
+      <PixelAgentIndicator api={props.api} />
       <SkillsCountIndicator api={props.api} />
       <CurrentModel api={props.api} />
       <ProviderCount api={props.api} />

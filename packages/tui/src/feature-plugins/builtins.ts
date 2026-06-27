@@ -21,6 +21,7 @@ import SpxPluginHost from "./spx/spx-plugin-host"
 import SpxUi from "./spx/spx-ui"
 import SpxAuto from "./spx/spx-auto"
 import SpxHome from "./spx/spx-home"
+import SpxPixelAgents from "./spx/spx-pixel-agents"
 
 export type BuiltinTuiPlugin = Omit<TuiPluginModule, "id"> & {
   id: string
@@ -52,5 +53,6 @@ export function createBuiltinPlugins(options: { experimentalEventSystem: boolean
     SpxUi,
     SpxAuto,
     SpxHome,
+    SpxPixelAgents,
   ]
 }
