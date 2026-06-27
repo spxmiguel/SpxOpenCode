@@ -93,11 +93,47 @@ Use the appropriate label:
 
 ## Upstream Sync
 
-SpxOpenCode tracks OpenCode upstream at `https://github.com/anomalyco/opencode`. When merging upstream:
+SpxOpenCode tracks OpenCode upstream at `https://github.com/anomalyco/opencode`.
+The `upstream` remote should already be set up in your clone. Verify with:
+
+```bash
+git remote -v
+# upstream  https://github.com/anomalyco/opencode.git (fetch)
+```
+
+If missing:
+```bash
+git remote add upstream https://github.com/anomalyco/opencode.git
+```
+
+### Sync script
+
+```bash
+./scripts/upstream-sync.sh           # preview + merge
+./scripts/upstream-sync.sh --dry-run # preview only, no merge
+```
+
+The script:
+1. Fetches upstream `main`
+2. Reports how many commits behind and which files changed
+3. Warns if any SpxOpenCode-owned files (`spx/` plugin dir) changed upstream
+4. Merges with `--no-ff` so the upstream pull is a distinct commit
+5. Runs `pnpm tsc --noEmit` to verify nothing broke
+
+### Conflict resolution rules
+
+| Files | Resolution |
+|-------|------------|
+| `packages/tui/src/feature-plugins/spx/*` | Keep SpxOpenCode version |
+| All other `packages/*` | Keep upstream version |
+| `ROADMAP.md`, `CONTRIBUTING.md`, `docs/` | Keep SpxOpenCode version |
+| `package.json`, `tsconfig.json`, lock files | Keep upstream version, re-apply SpxOpenCode additions |
+
+### Principles
 
 1. All SpxOpenCode changes must remain in `spx:*` plugin files
-2. Conflicts in `packages/` owned by OpenCode should resolve in favor of upstream
-3. After sync, verify all SpxOpenCode plugins still register and load correctly
+2. Never modify OpenCode-owned files to accommodate SpxOpenCode behavior — wrap instead
+3. After sync, verify all SpxOpenCode plugins still register and `/doctor` passes
 
 ---
 
