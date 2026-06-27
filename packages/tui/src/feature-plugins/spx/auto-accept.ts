@@ -2,6 +2,7 @@ import type { TuiPlugin } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { ACCEPT_MODE_KEY, setAcceptMode, acceptMode, type AcceptMode } from "./accept-mode-store"
 import { loadAllowlist, matchesAllowlist } from "./allowlist"
+import { writeAuditEntry } from "./audit-log"
 
 const id = "spx:auto-accept"
 
@@ -85,6 +86,12 @@ const tui: TuiPlugin = async (api) => {
         })
         return
       }
+      writeAuditEntry(api.state.path.directory, {
+        ts: new Date().toISOString(),
+        mode: "yolo",
+        patterns,
+        reply: "always",
+      })
       api.client.permission.reply({
         reply: "always",
         requestID: info.id,
@@ -96,6 +103,14 @@ const tui: TuiPlugin = async (api) => {
     if (mode === "auto") {
       const allowlist = loadAllowlist(api.state.path.directory)
       const persistent = allowlist !== null && matchesAllowlist(allowlist, patterns)
+      if (persistent) {
+        writeAuditEntry(api.state.path.directory, {
+          ts: new Date().toISOString(),
+          mode: "auto",
+          patterns,
+          reply: "always",
+        })
+      }
       api.client.permission.reply({
         reply: persistent ? "always" : "once",
         requestID: info.id,
