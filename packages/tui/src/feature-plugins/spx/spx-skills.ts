@@ -1,10 +1,21 @@
+import { join } from "node:path"
 import type { TuiPlugin, TuiDialogStack } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { generateCommitMessage, generatePrDescription, generateChangelog, copyToClipboard } from "./skill-generators"
+import { loadSkillsDir, type Skill } from "./skill-loader"
 
 const id = "spx:skills"
 
+let _projectSkills: Skill[] = []
+
+async function loadProjectSkills(cwd: string): Promise<void> {
+  const { skills } = await loadSkillsDir(join(cwd, ".spx", "skills"))
+  _projectSkills = skills
+}
+
 const tui: TuiPlugin = async (api) => {
+  await loadProjectSkills(process.cwd())
+
   api.command!.register(() => [
     {
       title: "Skill: Generate Commit Message",
@@ -57,6 +68,21 @@ const tui: TuiPlugin = async (api) => {
         })
       },
     },
+    ..._projectSkills.map((skill) => ({
+      title: `Skill: ${skill.name}`,
+      value: skill.id,
+      description: skill.description,
+      category: "SpxOpenCode (Custom)",
+      slash: { name: `skill:${skill.id}`, aliases: [] as string[] },
+      async onSelect(_dialog?: TuiDialogStack) {
+        const copied = copyToClipboard(skill.body)
+        await api.attention.notify({
+          title: copied ? `${skill.name} (copied to clipboard)` : skill.name,
+          message: skill.body.length > 500 ? skill.body.slice(0, 497) + "..." : skill.body,
+          notification: { when: "always" },
+        })
+      },
+    })),
   ])
 }
 

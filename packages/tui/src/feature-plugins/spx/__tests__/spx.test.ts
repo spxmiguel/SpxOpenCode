@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from "bun:test"
+import { describe, test, expect, beforeEach, afterEach } from "bun:test"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises"
@@ -695,5 +695,109 @@ describe("classify suggestion field", () => {
 
   test("unknown error returns undefined", () => {
     expect(classify({ name: "SomeRandomError" })).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Project custom skills (.spx/skills/ convention)
+// ---------------------------------------------------------------------------
+
+describe("project custom skills (.spx/skills/ convention)", () => {
+  let projectDir: string
+
+  beforeEach(async () => {
+    projectDir = await mkdtemp(join(tmpdir(), "spx-project-skills-"))
+  })
+
+  test("no .spx/skills dir → returns empty result without error", async () => {
+    const result = await loadSkillsDir(join(projectDir, ".spx", "skills"))
+    expect(result.skills).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  test("valid custom skill file loaded from .spx/skills/", async () => {
+    const skillsDir = join(projectDir, ".spx", "skills")
+    await mkdir(skillsDir, { recursive: true })
+    await writeFile(
+      join(skillsDir, "standup.md"),
+      [
+        "---",
+        "id: my.standup",
+        "name: Daily Standup",
+        "description: Generate standup template",
+        "version: 1.0.0",
+        "tags: [standup, team]",
+        "---",
+        "",
+        "## Standup — {{date}}",
+        "",
+        "**Yesterday:** ",
+        "**Today:** ",
+        "**Blockers:** none",
+      ].join("\n"),
+    )
+
+    const result = await loadSkillsDir(skillsDir)
+    expect(result.skills).toHaveLength(1)
+    expect(result.skills[0].id).toBe("my.standup")
+    expect(result.skills[0].name).toBe("Daily Standup")
+    expect(result.skills[0].tags).toContain("standup")
+    expect(result.skills[0].body).toContain("## Standup")
+  })
+
+  test("multiple custom skills all loaded", async () => {
+    const skillsDir = join(projectDir, ".spx", "skills")
+    await mkdir(skillsDir, { recursive: true })
+
+    const skill = (n: number) =>
+      [
+        "---",
+        `id: my.skill${n}`,
+        `name: Skill ${n}`,
+        "description: desc",
+        "version: 1.0.0",
+        "tags: [test]",
+        "---",
+        `body ${n}`,
+      ].join("\n")
+
+    await Promise.all([
+      writeFile(join(skillsDir, "skill1.md"), skill(1)),
+      writeFile(join(skillsDir, "skill2.md"), skill(2)),
+      writeFile(join(skillsDir, "skill3.md"), skill(3)),
+    ])
+
+    const result = await loadSkillsDir(skillsDir)
+    expect(result.skills).toHaveLength(3)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  test("invalid skill file reported as error, valid ones still loaded", async () => {
+    const skillsDir = join(projectDir, ".spx", "skills")
+    await mkdir(skillsDir, { recursive: true })
+    await writeFile(join(skillsDir, "bad.md"), "no frontmatter here")
+    await writeFile(
+      join(skillsDir, "good.md"),
+      [
+        "---",
+        "id: my.good",
+        "name: Good Skill",
+        "description: desc",
+        "version: 1.0.0",
+        "tags: [test]",
+        "---",
+        "body",
+      ].join("\n"),
+    )
+
+    const result = await loadSkillsDir(skillsDir)
+    expect(result.skills).toHaveLength(1)
+    expect(result.skills[0].id).toBe("my.good")
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].source).toBe("bad.md")
+  })
+
+  afterEach(async () => {
+    await rm(projectDir, { recursive: true, force: true })
   })
 })

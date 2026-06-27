@@ -2,9 +2,38 @@
 
 Skills are reusable markdown documents that provide structured guidance, prompt templates, and checklists for specific tasks. They are not executable — they are instructions.
 
-## Directory
+## Built-in skills
 
-Skills live in `spx/skills/` at the project root. Each skill is a `.md` file with required frontmatter.
+SpxOpenCode ships with three built-in skills, available via the command palette or slash commands:
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `/skill:commit` | `/commit-msg` | Generate conventional commit message from staged diff |
+| `/skill:changelog` | `/changelog` | Generate CHANGELOG entry from git log since last tag |
+| `/skill:pr` | `/pr-desc` | Generate PR description template from git log |
+
+All built-in skills output is copied to clipboard automatically.
+
+## Custom (project-level) skills
+
+Add your own skills to `.spx/skills/` at your project root. SpxOpenCode loads them automatically at startup and registers each as a slash command `/skill:<id>`.
+
+**Directory**: `.spx/skills/` (at project root, relative to where you run SpxOpenCode)
+
+**Example structure:**
+```
+my-project/
+└── .spx/
+    └── skills/
+        ├── standup.md
+        └── retro.md
+```
+
+Each skill appears in the command palette under "SpxOpenCode (Custom)" and is accessible via `/skill:<id>`.
+
+## Built-in skill templates
+
+Built-in skill templates live in `packages/tui/src/feature-plugins/spx/skills/`. Each `.md` file with required frontmatter.
 
 ## Required frontmatter
 
@@ -28,9 +57,9 @@ Skill content here.
 | `version` | string | Semver string |
 | `tags` | array | One or more tags (inline array syntax) |
 
-## Creating a skill
+## Creating a custom skill
 
-1. Add a `.md` file to `spx/skills/`
+1. Add a `.md` file to `.spx/skills/` at your project root
 2. Add the frontmatter block
 3. Write the skill body (purpose, when to use, when NOT to use, prompt structure, examples, limits)
 4. Run `/doctor` to validate
