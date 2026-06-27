@@ -42,11 +42,23 @@ export function checkSkillsHealth(result: SkillLoadResult): CheckResult {
   }
 }
 
-async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> {
-  const results: CheckResult[] = []
+async function pingLatency(url: string): Promise<number | null> {
+  try {
+    const t0 = Date.now()
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 3000)
+    await fetch(url, { method: "HEAD", signal: controller.signal }).catch(() => {})
+    clearTimeout(timer)
+    return Date.now() - t0
+  } catch {
+    return null
+  }
+}
 
-  // Providers
+async function checkProviders(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> {
+  const results: CheckResult[] = []
   const providers = api.state.provider
+
   if (providers.length === 0) {
     results.push({
       name: "Providers",
@@ -54,13 +66,36 @@ async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> 
       message: "No providers configured.",
       fix: "Run `opencode auth login` to add a provider.",
     })
-  } else {
-    results.push({
-      name: "Providers",
-      ok: true,
-      message: `${providers.length} provider(s) configured.`,
-    })
+    return results
   }
+
+  await Promise.all(
+    providers.map(async (p) => {
+      const models = Object.values(p.models)
+      const active = models.filter((m) => m.status === "active").length
+      const deprecated = models.filter((m) => m.status === "deprecated").length
+      const apiUrl = models[0]?.api?.url ?? null
+      const latency = apiUrl ? await pingLatency(apiUrl) : null
+      const latencyStr = latency !== null ? `${latency}ms` : "unreachable"
+      const modelStr = `${active} active${deprecated > 0 ? `, ${deprecated} deprecated` : ""} of ${models.length} models`
+      results.push({
+        name: `Provider: ${p.name}`,
+        ok: active > 0,
+        message: `${modelStr} — latency: ${latencyStr}`,
+        fix: active === 0 ? "No active models available for this provider." : undefined,
+      })
+    }),
+  )
+
+  return results
+}
+
+async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> {
+  const results: CheckResult[] = []
+
+  // Providers (v2: per-provider latency + model availability)
+  const providerResults = await checkProviders(api)
+  results.push(...providerResults)
 
   // VCS / Git
   const branch = api.state.vcs?.branch
