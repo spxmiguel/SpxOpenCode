@@ -3,6 +3,8 @@ import { createSignal } from "solid-js"
 import type { TuiPlugin, TuiDialogStack } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { loadSkillsDir, type SkillLoadResult } from "./skill-loader"
+import { lastPluginLoadResult } from "./spx-plugin-host"
+import type { PluginLoadResult } from "./spx-plugin-loader"
 
 export const [lastDoctorOk, setLastDoctorOk] = createSignal<boolean | null>(null)
 
@@ -13,6 +15,36 @@ type CheckResult = {
   ok: boolean
   message: string
   fix?: string
+}
+
+export function checkPluginsHealth(result: PluginLoadResult | null): CheckResult {
+  if (!result) {
+    return { name: "Community Plugins", ok: true, message: "Not yet loaded (host plugin pending init)." }
+  }
+  if (result.plugins.length === 0 && result.errors.length === 0) {
+    return { name: "Community Plugins", ok: true, message: "No community plugins installed (.spx/plugins/ empty or missing)." }
+  }
+  if (result.errors.length > 0 && result.plugins.length === 0) {
+    return {
+      name: "Community Plugins",
+      ok: false,
+      message: `All ${result.errors.length} community plugin(s) failed to load.`,
+      fix: result.errors.map((e) => `${e.file}: ${e.reason}`).join("; "),
+    }
+  }
+  if (result.errors.length > 0) {
+    return {
+      name: "Community Plugins",
+      ok: false,
+      message: `${result.plugins.length} plugin(s) loaded, ${result.errors.length} invalid.`,
+      fix: result.errors.map((e) => `${e.file}: ${e.reason}`).join("; "),
+    }
+  }
+  return {
+    name: "Community Plugins",
+    ok: true,
+    message: `${result.plugins.length} plugin(s) loaded: ${result.plugins.map((p) => p.plugin.id).join(", ")}.`,
+  }
 }
 
 export function checkSkillsHealth(result: SkillLoadResult): CheckResult {
@@ -170,6 +202,8 @@ async function runChecks(api: Parameters<TuiPlugin>[0]): Promise<CheckResult[]> 
   const skillsDir = join(process.cwd(), "spx", "skills")
   const skillsResult = await loadSkillsDir(skillsDir)
   results.push(checkSkillsHealth(skillsResult))
+
+  results.push(checkPluginsHealth(lastPluginLoadResult()))
 
   const problems = results.filter((c) => !c.ok).length
   setLastDoctorOk(problems === 0)
