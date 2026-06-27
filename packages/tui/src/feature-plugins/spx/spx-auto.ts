@@ -15,40 +15,29 @@ function getAvailableProviders(api: TuiPluginApi) {
 }
 
 const tui: TuiPlugin = async (api) => {
-  // /auto <task> — classify prompt, select best available model, announce decision
+  // /auto — pick best available model, announce decision
   api.command!.register(() => [
     {
       title: "Auto by SpxMiguel — route task to best model",
       value: "spx.auto.route",
       slash: { name: "auto" },
-      async onSelect(input?: string) {
-        const prompt = (input ?? "").trim()
-        if (!prompt) {
-          await api.attention.notify({
-            title: "Auto by SpxMiguel",
-            message: "Usage: /auto <task description>",
-            duration: 4000,
-          })
-          return
-        }
-
+      async onSelect() {
         const available = getAvailableProviders(api)
         const fallback = { providerID: "current", modelID: "current" }
-        const result = routeWithProviders(prompt, available, fallback)
+        const result = routeWithProviders("", available, fallback)
 
         setAutoChosenModel({ providerID: result.providerID, modelID: result.modelID })
         setAutoLastReason({ reason: result.reason, label: result.label })
 
-        // Build alternatives list for transparency
         const alternatives = available
           .flatMap((p) => p.modelIDs.map((m) => `${p.providerID}/${m}`))
           .filter((s) => s !== `${result.providerID}/${result.modelID}`)
           .slice(0, 3)
           .join(", ")
 
-        const altText = alternatives ? `\nAlternatives: ${alternatives}` : ""
+        const altText = alternatives ? ` | Alt: ${alternatives}` : ""
 
-        await api.attention.notify({
+        api.ui.toast({
           title: `◈ Auto → ${result.modelID}`,
           message: `Reason: ${result.label} (${result.reason})${altText}`,
           duration: 6000,
@@ -57,17 +46,11 @@ const tui: TuiPlugin = async (api) => {
     },
   ])
 
-  // Fallback recalculation on session.error — exclude the failed provider and reselect
-  api.event.subscribe("session.error", (event: unknown) => {
-    const model = (() => {
-      try {
-        return (event as { providerID?: string; modelID?: string }) ?? {}
-      } catch {
-        return {}
-      }
-    })()
+  // On session error, exclude failed provider and reselect
+  api.event.on("session.error", (event: any) => {
+    const error = event?.error ?? event
+    const failedProvider: string | undefined = error?.providerID ?? error?.provider
 
-    const failedProvider = model.providerID
     if (!failedProvider) return
 
     const available = getAvailableProviders(api).filter((p) => p.providerID !== failedProvider)
@@ -81,7 +64,7 @@ const tui: TuiPlugin = async (api) => {
     setAutoChosenModel({ providerID: result.providerID, modelID: result.modelID })
     setAutoLastReason({ reason: result.reason, label: result.label })
 
-    api.attention.notify({
+    api.ui.toast({
       title: `◈ Auto fallback → ${result.modelID}`,
       message: `${failedProvider} failed — switched to ${result.providerID}`,
       duration: 5000,
