@@ -41,3 +41,69 @@ export class LocalPixelAgentAdapter implements PixelAgentAdapter {
     }
   }
 }
+
+const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+const GROQ_MODEL = "llama3-8b-8192"
+const LOCAL_FALLBACK = new LocalPixelAgentAdapter()
+
+interface GroqChatResponse {
+  choices?: Array<{ message?: { content?: string } }>
+}
+
+/**
+ * Groq adapter — calls Groq chat completions for personality-flavored reactions.
+ * Only active when config.groqEnabled=true AND config.groqApiKey is set.
+ * Falls back to LocalPixelAgentAdapter on any network or API error.
+ * Zero Groq calls in local or premium mode.
+ */
+export class GroqPixelAgentAdapter implements PixelAgentAdapter {
+  async react(
+    agent: PixelAgent,
+    event: PixelAgentEvent,
+    state: PixelAgentState,
+    config: PixelAgentConfig,
+  ): Promise<PixelAgentAction | null> {
+    if (!config.groqEnabled || !config.groqApiKey) {
+      return LOCAL_FALLBACK.react(agent, event, state, config)
+    }
+
+    const personality = agent.personality
+    const systemPrompt = personality
+      ? `You are ${personality.name}. Tone: ${personality.tone ?? "neutral"}. Traits: ${(personality.traits ?? []).join(", ")}.`
+      : "You are a helpful Pixel Agent."
+
+    const userPrompt = `Event received: ${event.type}. Respond with a single short action label (snake_case, no spaces, max 40 chars). Only output the label, nothing else.`
+
+    try {
+      const res = await fetch(GROQ_CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 20,
+          temperature: 0.3,
+        }),
+        signal: AbortSignal.timeout(5000),
+      })
+
+      if (!res.ok) {
+        return LOCAL_FALLBACK.react(agent, event, state, config)
+      }
+
+      const data = (await res.json()) as GroqChatResponse
+      const raw = data.choices?.[0]?.message?.content?.trim() ?? ""
+      const label = raw.replace(/[^a-z0-9_.]/gi, "_").slice(0, 40) || "react.groq_response"
+
+      return { type: `react.groq.${label}`, payload: { agentId: agent.id, event: event.type } }
+    } catch {
+      return LOCAL_FALLBACK.react(agent, event, state, config)
+    }
+  }
+}

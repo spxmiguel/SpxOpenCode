@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from "bun:test"
 import { parsePixelAgentConfig } from "../pixel-agents/config"
 import { PixelAgentEventBus } from "../pixel-agents/events"
 import type { PixelAgentEvent } from "../pixel-agents/events"
-import { LocalPixelAgentAdapter } from "../pixel-agents/adapter"
+import { LocalPixelAgentAdapter, GroqPixelAgentAdapter } from "../pixel-agents/adapter"
 import { InMemoryPixelAgentMemoryStore } from "../pixel-agents/persistence"
 import { PixelAgentHost } from "../pixel-agents/host"
 import {
@@ -123,6 +123,39 @@ describe("LocalPixelAgentAdapter", () => {
       state,
       config,
     )
+    expect(action).toBeNull()
+  })
+})
+
+// ── groq adapter ─────────────────────────────────────────────────────────────
+
+describe("GroqPixelAgentAdapter", () => {
+  const adapter = new GroqPixelAgentAdapter()
+  const agent = { id: "test:agent", name: "Test", personality: { name: "Test", tone: "friendly", traits: ["calm"] } }
+  const state = { agentId: "test:agent", eventCount: 0, active: true }
+
+  test("groqEnabled=false → falls back to local deterministic action", async () => {
+    const config = parsePixelAgentConfig({ groqEnabled: false })
+    const action = await adapter.react(agent, { type: "build.success", timestamp: 1 }, state, config)
+    expect(action?.type).toBe("react.build_success")
+  })
+
+  test("groqEnabled=true but no apiKey → falls back to local", async () => {
+    const config = parsePixelAgentConfig({ groqEnabled: true })
+    expect(config.groqApiKey).toBeUndefined()
+    const action = await adapter.react(agent, { type: "build.failed", timestamp: 1 }, state, config)
+    expect(action?.type).toBe("react.build_failed")
+  })
+
+  test("groqEnabled=false even with apiKey → falls back to local", async () => {
+    const config = parsePixelAgentConfig({ groqEnabled: false, groqApiKey: "sk-test-abc" })
+    const action = await adapter.react(agent, { type: "tests.success", timestamp: 1 }, state, config)
+    expect(action?.type).toBe("react.tests_success")
+  })
+
+  test("unknown event + no groq → returns null (from local fallback)", async () => {
+    const config = parsePixelAgentConfig({ groqEnabled: false })
+    const action = await adapter.react(agent, { type: "session.started", timestamp: 1 }, state, config)
     expect(action).toBeNull()
   })
 })
